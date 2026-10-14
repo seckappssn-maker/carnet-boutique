@@ -794,6 +794,7 @@ function vSet(){const L=licState();const msg='Bonjour '+SUPPORT_NAME+', je veux 
   '<button class="btn" data-act="chkSub">Vérifier mon abonnement</button><div class="small">Après le paiement, appuyez sur « Vérifier mon abonnement ».</div></div>'+
   paperCard()+'<h3>Ma boutique</h3><form id="fShop" class="card stack"><label class="f">Nom<input id="sName" value="'+esc(S.shop.name)+'"></label><label class="f">Propriétaire<input id="sOwner" value="'+esc(S.shop.owner)+'"></label><div class="grid2"><label class="f">Téléphone<input id="sPhone" value="'+esc(S.shop.phone)+'"></label><label class="f">Adresse<input id="sAddr" value="'+esc(S.shop.address)+'"></label></div><label class="f">Message en bas des factures<input id="sFoot" value="'+esc(S.shop.footer||'')+'" placeholder="Merci pour votre confiance !"></label><button class="btn line" type="submit">Enregistrer</button></form>'+payQrCard()+
   '<h3>Écran de vente</h3><div class="card stack"><div class="seg"><button class="segb" type="button" data-ck="setMode" data-m="normal" aria-pressed="'+(S.sellMode!=='caisse')+'">Écran normal</button><button class="segb" type="button" data-ck="setMode" data-m="caisse" aria-pressed="'+(S.sellMode==='caisse')+'">Mode caisse</button></div><div class="small">Mode caisse : pavé de chiffres et gros boutons de couleur, comme une caisse de magasin. Les gros boutons sont les articles en favori. Vous pouvez changer quand vous voulez.</div></div>'+
+  '<h3>Lecteur de code-barres</h3><div class="card stack"><div class="small">Un lecteur Bluetooth (pistolet) marche avec Carnet Boutique. Pour le connecter : allumez-le en mode Bluetooth, puis sur le téléphone allez dans Réglages › Bluetooth et choisissez-le.</div><div class="small">Ensuite, dans Vente, scannez les articles l\'un après l\'autre : chaque scan met l\'article dans le panier. Puis vérifiez et encaissez sur le téléphone.</div><div class="small">Toutes les marques marchent (Netum, Eyoyo, Tera, Inateck, Symcode, Honeywell, Zebra, sans marque…), sur iPhone, Android et caisse POS Android : il faut que le lecteur soit en mode clavier (HID), c\'est le réglage normal.</div><div class="small">Test : restez sur cette page et scannez un code. Le téléphone doit afficher « Lecteur OK ».</div></div>'+
   '<h3>Affichage</h3><div class="card stack"><label class="chk"><input type="checkbox" data-big'+(document.documentElement.classList.contains('big')?' checked':'')+'>Lettres plus grandes</label><div class="small">Pour ceux qui voient mal : tout devient plus grand sur ce téléphone.</div></div>'+
   '<h3>Voix</h3><div class="card stack"><label class="chk"><input type="checkbox" data-voice'+(voiceOn()?' checked':'')+'>Annoncer le total à voix haute</label><div class="small">Le téléphone dit le total, l\'argent reçu et la monnaie à rendre (en français).</div><button class="btn line" data-act="testVoice">🔊 Tester la voix</button></div>'+
   '<h3>Code patron</h3><div class="card stack"><div class="small">Si un vendeur utilise le téléphone : avec un code, il peut vendre et encaisser, mais pas voir le bénéfice, changer les prix, le stock ou les réglages.</div><label class="f">'+(S.pin?'Nouveau code (vide = enlever le code)':'Code à 4 chiffres')+'<input id="newPin" type="password" inputmode="numeric" maxlength="6"></label><button class="btn line" data-act="setPin">'+(S.pin?'Changer / enlever le code':'Mettre le code')+'</button></div>'+
@@ -1399,14 +1400,48 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-ck]');if(
 // Encaisser à crédit sans nom : on ouvre la fiche client au lieu de faire défiler
 document.addEventListener('click',e=>{const b=e.target.closest('#encBtn');if(!b||!$('cxRoot')||!draft)return;readDraft();const c=calc();
   if(c.paid<c.total&&!String(draft.client||'').trim()){e.stopImmediatePropagation();e.preventDefault();cxClient();toast('Écrivez le nom du client pour le crédit');}},true);
-// Lecteur de code-barres (POS Android, USB, Bluetooth) : il tape le code puis Entrée
-let cxKb='',cxKt=0;
-document.addEventListener('keydown',e=>{if(!S||tab!=='sell'||S.sellMode!=='caisse')return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return;if($('sheetRoot').innerHTML.trim())return;
-  const n=Date.now();if(n-cxKt>150)cxKb='';cxKt=n;
-  if(e.key==='Enter'){const c=cxKb.trim();cxKb='';if(c.length<4)return;e.preventDefault();if(!w())return;if(!draft)draft=newDraft();readDraft();const p=byCode(c);
-    if(p){try{beep()}catch(x){}const ok=addProdToDraft(p);render();if(ok)toast('+1 '+p.name);}
-    else openSheet('Article inconnu','<div class="card stack"><div>Le code <b>'+esc(c)+'</b> n\'est pas dans votre stock.</div><button class="btn" data-act="createFromCode" data-c="'+esc(c)+'">Créer l\'article</button><button class="btn line" data-act="close">Annuler</button></div>');}
-  else if(e.key.length===1)cxKb+=e.key;});
+// Lecteur de code-barres (Bluetooth, USB, POS Android) : il tape le code très vite puis Entrée.
+// Marche partout : Vente (écran normal et mode caisse), Stock, fenêtres « Scanner », Réglages (test).
+let kbB='',kbT=0,kbF=0,kbEl=null,kbV='',kbTO=null;
+// Toutes les marques : le lecteur peut être réglé en clavier US ou français (AZERTY), finir par Entrée, Tab ou rien.
+const KB_AZ={'&':'1','é':'2','"':'3',"'":'4','(':'5','§':'6','-':'6','è':'7','_':'8','!':'8','ç':'9','à':'0'};
+function kbChar(e){const m=/^(?:Digit|Numpad)(\d)$/.exec(e.code||'');if(m)return m[1];
+  if(e.key&&e.key.length===1)return e.key;return '';}
+function kbClean(c){c=String(c||'').trim();if(/^[&é"'(§\-è_!çà0-9]+$/.test(c)&&c.replace(/[0-9]/g,'').length>=c.length/3)c=c.replace(/[&é"'(§\-è_!çà]/g,x=>KB_AZ[x]);
+  return c.replace(/[\u0000-\u001f]/g,'');}
+function kbFire(e){const c=kbClean(kbB),fast=kbF,el=kbEl,v=kbV,inp=el;kbB='';kbF=0;kbT=0;kbEl=null;clearTimeout(kbTO);
+  if(c.length<4)return false;
+  if(inp&&fast<Math.floor((c.length-1)*0.7))return false; // tapé à la main : on ne touche à rien
+  if($('sheetRoot').innerHTML.trim()&&!scanCb)return false;
+  if(e){e.preventDefault();e.stopImmediatePropagation();}
+  if(inp){inp.value=v;try{inp.dispatchEvent(new Event('input',{bubbles:true}))}catch(x){}try{inp.blur()}catch(x){}}
+  kbCode(c);return true;}
+function kbUnknown(c){openSheet('Article inconnu','<div class="card stack"><div>Le code <b>'+esc(c)+'</b> n\'est pas dans votre stock.</div><button class="btn" data-act="createFromCode" data-c="'+esc(c)+'">Créer l\'article</button><button class="btn line" data-act="close">Annuler</button></div>');}
+function kbSell(c){if(!w())return;if(!draft)draft=newDraft();readDraft();if(tab!=='sell')tab='sell';const p=byCode(c);
+  if(p){try{beep()}catch(x){}try{navigator.vibrate&&navigator.vibrate(40)}catch(x){}const ok=addProdToDraft(p);render();if(ok)toast('+1 '+p.name);}
+  else{render();kbUnknown(c);}}
+function kbCode(c){const sh=$('sheetRoot').innerHTML.trim();
+  if(sh){if(scanCb){gotCode(c);return true;}return false;}
+  if(tab==='set'){try{beep()}catch(x){}toast('Lecteur OK · code '+c);return true;}
+  if(tab==='stock'){needPin(()=>{const p=byCode(c);if(p){showProd(p.id);toast(p.name);}else showProd('',{code:c});});return true;}
+  kbSell(c);return true;}
+document.addEventListener('keydown',e=>{if(!S)return;
+  const t=e.target,inp=t&&/^(INPUT|TEXTAREA)$/.test(t.tagName)?t:null;
+  if(inp&&(inp.id==='prCode'||inp.id==='scanManual'||inp.type==='password'))return; // là, le code doit s'écrire dans la case
+  const n=Date.now(),gap=n-kbT;
+  if(e.key==='Enter'||e.key==='Tab'||e.keyCode===13){if(gap>=300||!kbB){kbB='';return;}kbFire(e);return;}
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const ch=kbChar(e);if(!ch)return; // Maj, etc.
+  if(gap>=100||(inp&&inp!==kbEl)){kbB='';kbF=0;kbEl=inp;kbV=inp?inp.value:'';}else kbF++; // une touche lente = une personne : on recommence
+  kbB+=ch;kbT=n;
+  // Lecteur réglé sans touche de fin : on valide tout seul après une petite pause
+  clearTimeout(kbTO);kbTO=setTimeout(()=>{if(kbB.length>=6&&kbF>=kbB.length-2)kbFire(null);},350);},true);
+Object.assign(WO,{"Lecteur de code-barres":"Masin bu jàng code-barres",
+  "Un lecteur Bluetooth (pistolet) marche avec Carnet Boutique. Pour le connecter : allumez-le en mode Bluetooth, puis sur le téléphone allez dans Réglages › Bluetooth et choisissez-le.":"Masin Bluetooth (pistolet) dafay dox ak Carnet Boutique. Ngir ko lëkkale : taal ko ci mode Bluetooth, te ci telefon bi dem ci Réglages › Bluetooth, tànn ko.",
+  "Ensuite, dans Vente, scannez les articles l'un après l'autre : chaque scan met l'article dans le panier. Puis vérifiez et encaissez sur le téléphone.":"Ginnaaw loolu, ci Jaay, scanner marsandiis yi benn-benn : bépp scan dafay yokk marsandiis bi ci panier bi. Ginnaaw seetal te jël xaalis bi ci telefon bi.",
+  "Test : restez sur cette page et scannez un code. Le téléphone doit afficher « Lecteur OK ».":"Test : toogal ci page bii te scanner benn code. Telefon bi dafa wara wone « Lecteur OK »."});
+Object.assign(WO,{"Toutes les marques marchent (Netum, Eyoyo, Tera, Inateck, Symcode, Honeywell, Zebra, sans marque…), sur iPhone, Android et caisse POS Android : il faut que le lecteur soit en mode clavier (HID), c'est le réglage normal.":"Masin yépp dañuy dox (Netum, Eyoyo, Tera, Inateck, Symcode, Honeywell, Zebra, yu amul tur…), ci iPhone, Android ak kees POS Android : fàww masin bi nekk ci mode clavier (HID), mooy réglage bu normal bi."});
+WO_RX.push([/^Lecteur OK · code (.+)$/,"Masin bi baax na · code $1"]);
 Object.assign(WO,{"Écran de vente":"Ekraanu jaay","Écran normal":"Ekraan normal","Mode caisse":"Mode kees","× Qté":"× Lim","Reçu":"Li mu jox","Prix libre":"Bindal njëg","Tapez un nombre":"Bindal benn siifar",
   "Pavé":"Siifar","Boutons":"Butoŋ","Scan":"Scan","Panier":"Panier","+ Client":"+ Kiliyaan","Vider":"Far","Client":"Kiliyaan","Valider":"Dëggal","Montant exact":"Xaalis bi mat na","Vente à crédit":"Jaay ci bor",
   "Mode caisse activé":"Mode kees dox na","Écran normal activé":"Ekraan normal dox na",
