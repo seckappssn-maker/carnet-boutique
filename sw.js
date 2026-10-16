@@ -1,6 +1,6 @@
 // Carnet Boutique : permet d'ouvrir l'app même sans internet.
 // Pour forcer une mise à jour du cache, changer le numéro de VERSION.
-const VERSION = 'cb-v2';
+const VERSION = 'cb-v3';
 const APP = ['./', './index.html', './apple-touch-icon.png'];
 const LIBS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
@@ -62,6 +62,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && /shop\.html$/.test(url.pathname)) return; // page des clients (boutique en ligne) : toujours en ligne, jamais mélangée avec l'app
   if (req.mode === 'navigate' && url.origin === location.origin) return e.respondWith(page(req));
   if (url.origin === location.origin) {
     if (/config\.json$/.test(url.pathname)) return; // toujours en ligne (l'app garde déjà une copie)

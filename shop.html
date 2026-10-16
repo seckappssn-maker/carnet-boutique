@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B6E5B">
+<meta name="description" content="Découvrez nos articles avec photos et prix, et commandez directement sur WhatsApp.">
+<meta property="og:title" content="Boutique en ligne — commandez sur WhatsApp">
+<meta property="og:description" content="Photos et prix. Choisissez vos articles et commandez directement sur WhatsApp.">
+<meta property="og:image" content="https://seckappssn-maker.github.io/carnet-boutique/copertina-shop.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://seckappssn-maker.github.io/carnet-boutique/shop.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="apple-touch-icon.png?v=2">
+<title>Boutique en ligne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@500;600;700;800&display=swap">
+<title>Boutique en ligne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@500;600;700;800&display=swap">
+<style>
+/* Vitrine de boutique : bandeau vert Carnet, rayon d'articles en 2 colonnes comme une étagère, panier en bas */
+:root{
+  --bg:#F5F3EC; --surface:#FFFFFF; --ink:#13221D; --muted:#5B6862; --line:#E2DED3;
+  --green:#0B6E5B; --green-deep:#084C3F; --yellow:#FCEE45; --yellow-soft:#FFF8C2;
+  --bad:#B4361B; --wa:#1DA851;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --fs:16px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1714; --surface:#17221E; --ink:#ECF2EF; --muted:#A2B1AA; --line:#2A3832;
+  --green:#3FB596; --green-deep:#0B3A30; --yellow:#FCEE45; --yellow-soft:#3A3A14; --bad:#FF8A6B; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1714; --surface:#17221E; --ink:#ECF2EF; --muted:#A2B1AA; --line:#2A3832;
+  --green:#3FB596; --green-deep:#0B3A30; --yellow:#FCEE45; --yellow-soft:#3A3A14; --bad:#FF8A6B; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:var(--fs);line-height:1.45;margin:0;padding-bottom:110px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.05;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.demo{background:var(--yellow);color:#2A2600;text-align:center;font-weight:800;font-size:calc(var(--fs)*.85);padding:9px 16px}
+.wrap{max-width:900px;margin:0 auto;padding-inline:16px}
+
+/* En-tête */
+.hero{background:#0B6E5B;color:#fff;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 16px,transparent 16px 32px)}
+.hero .wrap{position:relative;padding-block:18px 22px;display:flex;flex-direction:column;gap:12px}
+.tools{display:flex;justify-content:flex-end;gap:8px}
+.tbtn{border:1.5px solid rgba(255,255,255,.7);background:transparent;color:#fff;border-radius:999px;padding:6px 14px;font-weight:800;font-size:14px}
+.id{display:flex;gap:14px;align-items:center}
+.logo{width:64px;height:64px;border-radius:18px;background:#FCEE45;color:#0B4A3E;display:grid;place-items:center;font:800 26px var(--display);flex:none;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.hero h1{font-size:clamp(28px,7vw,40px);font-weight:800;letter-spacing:-.02em}
+.hero .txt{color:#DDF1EA;max-width:40em}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips span{background:rgba(255,255,255,.14);border-radius:999px;padding:6px 12px;font-weight:700;font-size:calc(var(--fs)*.85)}
+
+/* Barre de recherche et rayons */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar .wrap{padding-block:10px;display:flex;flex-direction:column;gap:10px}
+.search{width:100%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:12px 14px;font:600 var(--fs) var(--body)}
+.cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:800;font-size:calc(var(--fs)*.9);white-space:nowrap}
+.cat[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* Articles */
+main.wrap{padding-block:16px}
+.sec{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+.sec h2{font-size:calc(var(--fs)*1.4);font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;position:relative;min-width:0}
+.card.out .pic img,.card.out .pic svg{filter:grayscale(1);opacity:.55}
+.pic{aspect-ratio:1/1;background:var(--yellow-soft);display:block;width:100%;border:0;padding:0;position:relative}
+.pic img,.pic svg{width:100%;height:100%;object-fit:cover;display:block}
+.badge{position:absolute;top:8px;left:8px;border-radius:999px;padding:4px 10px;font-weight:800;font-size:calc(var(--fs)*.72)}
+.b-out{background:var(--bad);color:#fff}
+.b-promo{background:#FCEE45;color:#2A2600}
+.b-new{background:#0B6E5B;color:#fff}
+.cb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.cb h3{font-family:var(--body);font-size:calc(var(--fs)*.95);font-weight:800;line-height:1.25}
+.desc{color:var(--muted);font-size:calc(var(--fs)*.82);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pr{margin-top:auto;padding-top:6px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.price{font:800 calc(var(--fs)*1.15) var(--display);font-variant-numeric:tabular-nums}
+.old{color:var(--muted);text-decoration:line-through;font-size:calc(var(--fs)*.8);font-variant-numeric:tabular-nums}
+.add{margin-top:8px;border:0;border-radius:12px;background:#0B6E5B;color:#fff;font-weight:800;padding:10px;min-height:44px}
+.add:disabled{background:var(--line);color:var(--muted);cursor:not-allowed}
+.step{margin-top:8px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;background:var(--yellow-soft);border-radius:12px}
+.step button{border:0;background:transparent;font:800 22px var(--body);min-height:44px;color:var(--ink)}
+.step b{text-align:center;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:30px 10px}
+
+/* Panier en bas */
+.cartbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 75%,transparent)}
+.cartbtn{width:100%;max-width:868px;margin:0 auto;display:flex;align-items:center;gap:12px;border:0;border-radius:18px;background:var(--wa);color:#fff;padding:14px 18px;font-weight:800;font-size:calc(var(--fs)*1.05);box-shadow:0 10px 26px rgba(29,168,81,.35)}
+.cartbtn .n{background:#fff;color:#14622F;border-radius:999px;min-width:30px;height:30px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.cartbtn .t{margin-left:auto;font-variant-numeric:tabular-nums}
+.cartbtn:disabled{background:var(--line);color:var(--muted);box-shadow:none}
+.cartbtn:disabled .n{background:var(--surface);color:var(--muted)}
+
+/* Feuilles */
+.shade{position:fixed;inset:0;z-index:40;background:rgba(5,15,12,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);color:var(--ink);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.sh{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sh h2{font-size:calc(var(--fs)*1.35)}
+.x{border:1.5px solid var(--line);background:transparent;border-radius:999px;width:40px;height:40px;font-size:20px;flex:none}
+.line{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.line .nm{font-weight:700}
+.line .sm{color:var(--muted);font-size:calc(var(--fs)*.85);font-variant-numeric:tabular-nums}
+.line .step{margin:0;width:132px}
+.tot{display:flex;justify-content:space-between;font:800 calc(var(--fs)*1.25) var(--display);font-variant-numeric:tabular-nums}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg.three{grid-template-columns:repeat(3,1fr)}
+.seg button{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 6px;font-weight:800;min-height:46px;font-size:calc(var(--fs)*.9)}
+.seg button[aria-pressed="true"]{border-color:#0B6E5B;background:#0B6E5B;color:#fff}
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:calc(var(--fs)*.9)}
+label.f input,label.f textarea{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px;font:600 var(--fs) var(--body)}
+.ftitle{font-weight:800;font-size:calc(var(--fs)*.8);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.err{color:var(--bad);font-weight:700}
+.send{border:0;border-radius:16px;background:var(--wa);color:#fff;font-weight:800;padding:16px;font-size:calc(var(--fs)*1.05);min-height:54px}
+.big{width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:var(--yellow-soft)}
+.big img,.big svg{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs{display:flex;gap:8px}
+.thumbs button{width:62px;height:62px;border-radius:12px;overflow:hidden;border:2px solid transparent;padding:0;background:var(--yellow-soft)}
+.thumbs button[aria-pressed="true"]{border-color:#0B6E5B}
+.thumbs svg{width:100%;height:100%;display:block}
+.msg{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:calc(var(--fs)*.9)}
+.note{color:var(--muted);font-size:calc(var(--fs)*.85)}
+footer{color:var(--muted);text-align:center;font-size:13px;padding:6px 16px 20px}
+footer b{color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.add,.cartbtn,.send{transition:transform .12s}.add:active,.cartbtn:active,.send:active{transform:scale(.97)}}
+</style>
+</head>
+<body>
+
+
+<div class="demo" id="demo" hidden>Exemple de boutique en ligne : articles et photos d'exemple</div>
+<header class="hero"><div class="wrap">
+  <div class="tools"><button class="tbtn" id="bigTxt" type="button">A+</button><button class="tbtn" id="lang" type="button">Wolof</button></div>
+  <div class="id"><div class="logo" id="logo">PA</div><div><h1 id="nom">Boutique</h1></div></div>
+  <p class="txt" id="texte"></p>
+  <div class="chips" id="chips"></div>
+</div></header>
+
+<div class="bar"><div class="wrap">
+  <input class="search" id="q" type="search" placeholder="Chercher un article" autocomplete="off">
+  <div class="cats" id="cats" role="toolbar" aria-label="Rayons"></div>
+</div></div>
+
+<main class="wrap" id="list"></main>
+<footer>Boutique faite avec <b>Carnet Boutique</b> · Seck Apps</footer>
+
+<div class="cartbar"><button class="cartbtn" id="cartBtn" type="button" disabled><span class="n" id="cartN">0</span><span id="cartL">Ma commande</span><span class="t" id="cartT">0 F</span></button></div>
+<div id="sheetRoot"></div>
+
+<script>
+/* ---------- Exemple (profumerie) ---------- */
+function drawing(kind,bg,c,c2){ // dessins d'exemple : téléphone, robe, chaussure, sac, parfum, crème…
+  const k={
+   phone:'<rect x="66" y="30" width="68" height="138" rx="14" fill="#1C2321"/><rect x="72" y="42" width="56" height="112" rx="6" fill="'+c+'"/><circle cx="100" cy="161" r="3.5" fill="#55615C"/><circle cx="84" cy="64" r="10" fill="#fff" opacity=".35"/>',
+   robe:'<path d="M82 34h36l8 26-12 8 22 98H64l22-98-12-8z" fill="'+c+'"/><path d="M82 34c4 10 32 10 36 0" fill="none" stroke="'+c2+'" stroke-width="5"/><path d="M70 150h60" stroke="'+c2+'" stroke-width="6"/>',
+   chaussure:'<path d="M40 128c18 0 34-8 46-26l14 2c10 18 34 22 58 24 6 0 10 6 10 12v8H40z" fill="'+c+'"/><rect x="40" y="146" width="128" height="10" rx="4" fill="'+c2+'"/><path d="M92 108l8 10M102 104l8 10" stroke="#fff" stroke-width="4" stroke-linecap="round"/>',
+   sac:'<path d="M78 74c0-30 44-30 44 0" fill="none" stroke="'+c2+'" stroke-width="8"/><rect x="50" y="70" width="100" height="96" rx="16" fill="'+c+'"/><rect x="88" y="96" width="24" height="12" rx="4" fill="'+c2+'"/>',
+   parfum:'<rect x="86" y="44" width="28" height="26" rx="5" fill="'+c2+'"/><rect x="80" y="64" width="40" height="10" rx="4" fill="'+c2+'"/><rect x="56" y="76" width="88" height="100" rx="20" fill="'+c+'"/><rect x="68" y="90" width="14" height="60" rx="7" fill="#fff" opacity=".35"/><rect x="78" y="128" width="44" height="18" rx="4" fill="#fff" opacity=".85"/>',
+   creme:'<rect x="52" y="92" width="96" height="78" rx="18" fill="'+c+'"/><rect x="48" y="78" width="104" height="22" rx="8" fill="'+c2+'"/><rect x="74" y="118" width="52" height="20" rx="4" fill="#fff" opacity=".85"/>',
+   ecouteurs:'<path d="M60 120v-20a40 40 0 0 1 80 0v20" fill="none" stroke="'+c+'" stroke-width="10" stroke-linecap="round"/><rect x="46" y="112" width="28" height="44" rx="12" fill="'+c2+'"/><rect x="126" y="112" width="28" height="44" rx="12" fill="'+c2+'"/>',
+   tissu:'<path d="M48 60h104v96H48z" fill="'+c+'"/><path d="M48 60l104 96M100 60l52 48M48 108l52 48" stroke="'+c2+'" stroke-width="8" opacity=".7"/><rect x="140" y="52" width="16" height="112" rx="8" fill="'+c2+'"/>'
+  }[kind]||'';
+  return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="200" height="200" fill="'+bg+'"/><ellipse cx="100" cy="182" rx="62" ry="8" fill="#000" opacity=".1"/>'+k+'</svg>';
+}
+const EX={nom:'Boutique Awa (exemple)',texte:'Téléphones, vêtements, chaussures et parfums. Livraison partout à Dakar, envoi en région.',
+  whatsapp:'770000000',adresse:'Médina, Dakar',livraison:true,retrait:true,paiements:['Wave','Orange Money','Espèces'],
+  articles:[
+  {id:'a1',nom:'Téléphone 128 Go',cat:'Téléphones',prix:95000,old:110000,desc:'Comme neuf, batterie 92 %, avec chargeur.',stock:2,img:[drawing('phone','#DCE9F6','#2F6FB0'),drawing('phone','#E8EEF4','#7A8C9E')]},
+  {id:'a2',nom:'Écouteurs sans fil',cat:'Téléphones',prix:8000,desc:'Bluetooth, boîtier de charge.',stock:15,img:[drawing('ecouteurs','#EEF0F2','#1C2321','#55615C')],badge:'new'},
+  {id:'a3',nom:'Robe wax',cat:'Vêtements',prix:15000,desc:'Tailles S à XL. Dites la taille dans la note.',stock:6,img:[drawing('robe','#FDEBD3','#D9480F','#0B6E5B')]},
+  {id:'a4',nom:'Bazin riche 5 m',cat:'Vêtements',prix:25000,desc:'Plusieurs couleurs : demandez sur WhatsApp.',stock:0,img:[drawing('tissu','#E6F4EF','#0B6E5B','#FCEE45')]},
+  {id:'a5',nom:'Baskets homme',cat:'Chaussures & sacs',prix:18000,desc:'Du 40 au 45.',stock:4,img:[drawing('chaussure','#F1F1F1','#1C2321','#E7E2D8')]},
+  {id:'a6',nom:'Sac à main',cat:'Chaussures & sacs',prix:12500,desc:'Simili cuir, 3 couleurs.',stock:5,img:[drawing('sac','#F7E6D5','#8A4B2A','#C9A227')]},
+  {id:'a7',nom:'Parfum 100 ml',cat:'Parfums & beauté',prix:20000,desc:'Boisé et oriental.',stock:7,img:[drawing('parfum','#F4E3C8','#6B3F1D','#C9A227')]},
+  {id:'a8',nom:'Crème karité',cat:'Parfums & beauté',prix:3500,desc:'Pot de 250 g.',stock:20,img:[drawing('creme','#FFF3E6','#F2C6A0','#0B6E5B')]}
+]};
+
+/* ---------- Langue ---------- */
+const WO={'Ma commande':'Sama komand','Ajouter':'Yokk','Épuisé':'Jeex na','Livraison':'Yóbbal','Votre nom':'Sa tur','Votre téléphone':'Sa telefon',
+ 'Adresse ou repère':'Adrees walla màndarga','Total':'Lépp','Envoyer ma commande sur WhatsApp':'Yónnee sama komand ci WhatsApp','Fermer':'Tëj',
+ 'Votre panier est vide.':'Sa panier amul dara.','Vider':'Far lépp','Écrivez votre nom.':'Bindal sa tur.','Réessayer':'Jéemaatal',
+ 'Pas de connexion internet.':'Amul internet.','Lien introuvable.':'Lien bi amul.','Texte plus grand':'Bind bu gën a mag','Texte normal':'Bind bu yem','Français':'Wolof'};
+let LANG='fr';const t=s=>LANG==='wo'&&WO[s]?WO[s]:s;
+
+/* ---------- État ---------- */
+let D=null,DEMO=true,CAT='Tout',Q='',cart={},mode='livraison',pay='';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const F=n=>Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' F';
+const pic=(a,i)=>{const s=(a.img||[])[i||0];if(!s)return '<svg viewBox="0 0 200 200" aria-hidden="true"><rect width="200" height="200" fill="#FFF8C2"/><path d="M70 90h60l-6 60H76z" fill="none" stroke="#0B6E5B" stroke-width="6" stroke-linejoin="round"/><path d="M84 90c0-22 32-22 32 0" fill="none" stroke="#0B6E5B" stroke-width="6"/></svg>';
+  return s.startsWith('<svg')?s:'<img src="'+esc(s)+'" alt="'+esc(a.nom)+'" loading="lazy" decoding="async">';};
+const art=id=>D.articles.find(a=>a.id===id);
+const count=()=>Object.values(cart).reduce((x,y)=>x+y,0);
+const total=()=>Object.entries(cart).reduce((s,[id,q])=>s+(art(id)?art(id).prix*q:0),0);
+
+/* ---------- Affichage ---------- */
+function head(){$('nom').textContent=D.nom;$('texte').textContent=D.texte||'';$('texte').hidden=!D.texte;
+  $('logo').textContent=(D.nom.replace(/\(.*\)/,'').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2)||'B').toUpperCase();
+  const c=[];if(D.adresse)c.push('📍 '+D.adresse);if(D.livraison)c.push(t('Livraison'));if(D.retrait)c.push('Retrait sur place');(D.paiements||[]).forEach(p=>c.push(p));
+  $('chips').innerHTML=c.map(x=>'<span>'+esc(x)+'</span>').join('');
+  document.title=D.nom.replace(/\s*\(exemple\)/,'');}
+function cats(){const cs=['Tout',...new Set(D.articles.map(a=>a.cat||'Articles'))];
+  $('cats').innerHTML=cs.map(c=>'<button class="cat" type="button" data-cat="'+esc(c)+'" aria-pressed="'+(c===CAT)+'">'+esc(c==='Tout'?'Tout voir':c)+'</button>').join('');}
+const isOut=a=>a.stock!==null&&a.stock!==undefined&&!(a.stock>0);
+const maxQ=a=>a.stock===null||a.stock===undefined?99:a.stock;
+function card(a){const q=cart[a.id]||0,out=isOut(a);
+  const badge=out?'<span class="badge b-out">'+t('Épuisé')+'</span>':a.old>a.prix?'<span class="badge b-promo">Promo</span>':(a.badge==='new'||a.nouveau)?'<span class="badge b-new">Nouveau</span>':'';
+  return '<article class="card'+(out?' out':'')+'"><button class="pic" type="button" data-see="'+a.id+'" aria-label="Voir '+esc(a.nom)+'">'+pic(a)+badge+'</button>'+
+   '<div class="cb"><h3>'+esc(a.nom)+'</h3>'+(a.desc?'<p class="desc">'+esc(a.desc)+'</p>':'')+
+   '<div class="pr"><span class="price">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
+   (q?'<div class="step"><button type="button" data-m="'+a.id+'" aria-label="Enlever un">−</button><b>'+q+'</b><button type="button" data-p="'+a.id+'" aria-label="Ajouter un"'+(q>=maxQ(a)?' disabled':'')+'>+</button></div>'
+     :'<button class="add" type="button" data-p="'+a.id+'"'+(out?' disabled':'')+'>'+(out?t('Épuisé'):t('Ajouter'))+'</button>')+'</div></article>';}
+function list(){const q=Q.trim().toLowerCase();
+  const as=D.articles.filter(a=>(CAT==='Tout'||a.cat===CAT)&&(!q||(a.nom+' '+(a.desc||'')).toLowerCase().includes(q)));
+  if(!as.length){$('list').innerHTML='<p class="empty">Aucun article trouvé.</p>';return;}
+  const groups={};as.forEach(a=>{(groups[a.cat||'Articles']=groups[a.cat||'Articles']||[]).push(a)});
+  $('list').innerHTML=Object.entries(groups).map(([c,xs])=>'<section class="sec"><h2>'+esc(c)+'</h2><div class="grid">'+xs.map(card).join('')+'</div></section>').join('');}
+function bar(){const n=count();$('cartN').textContent=n;$('cartT').textContent=F(total());$('cartL').textContent=t('Ma commande');$('cartBtn').disabled=!n;}
+function all(){head();cats();list();bar();$('lang').textContent=LANG==='fr'?'Wolof':'Français';}
+
+/* ---------- Feuilles ---------- */
+function open(html){$('sheetRoot').innerHTML='<div class="shade" id="shade"><div class="sheet" role="dialog" aria-modal="true">'+html+'</div></div>';}
+function close(){$('sheetRoot').innerHTML='';}
+function see(id,i){const a=art(id);i=i||0;const out=isOut(a);
+  open('<div class="sh"><h2>'+esc(a.nom)+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
+   '<div class="big">'+pic(a,i)+'</div>'+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
+   (a.desc?'<p>'+esc(a.desc)+'</p>':'')+
+   '<div class="pr"><span class="price" style="font-size:28px">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
+   (out?'<p class="err">'+t('Épuisé')+'</p>':'<button class="send" type="button" data-p="'+a.id+'" data-close>'+t('Ajouter')+' · '+F(a.prix)+'</button>'));}
+function showCart(err){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
+  if(!ls.length){open('<div class="sh"><h2>'+t('Ma commande')+'</h2><button class="x" type="button" data-close>×</button></div><p class="empty">'+t('Votre panier est vide.')+'</p>');return;}
+  const opts=[];if(D.livraison)opts.push(['livraison',t('Livraison')]);if(D.retrait)opts.push(['retrait','Je passe récupérer']);if(!opts.find(o=>o[0]===mode))mode=opts[0][0];
+  open('<div class="sh"><h2>'+t('Ma commande')+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
+   ls.map(([id,q])=>{const a=art(id);return '<div class="line"><div><div class="nm">'+esc(a.nom)+'</div><div class="sm">'+F(a.prix)+' × '+q+' = '+F(a.prix*q)+'</div></div><div class="step"><button type="button" data-m="'+id+'" data-in>−</button><b>'+q+'</b><button type="button" data-p="'+id+'" data-in'+(q>=maxQ(a)?' disabled':'')+'>+</button></div></div>'}).join('')+
+   '<div class="tot"><span>'+t('Total')+'</span><span>'+F(total())+'</span></div>'+
+   (opts.length>1?'<div class="seg">'+opts.map(o=>'<button type="button" data-mode="'+o[0]+'" aria-pressed="'+(o[0]===mode)+'">'+esc(o[1])+'</button>').join('')+'</div>':'')+
+   '<label class="f">'+t('Votre nom')+'<input id="cNom" autocomplete="name" value="'+esc(window._nom||'')+'"></label>'+
+   (mode==='livraison'?'<label class="f">'+t('Adresse ou repère')+'<input id="cAdr" placeholder="Ex : Parcelles U17, près de la pharmacie" value="'+esc(window._adr||'')+'"></label>':'')+
+   ((D.paiements||[]).length?'<div class="ftitle">Paiement</div><div class="seg'+(D.paiements.length>2?' three':'')+'">'+D.paiements.map(p=>'<button type="button" data-pay="'+esc(p)+'" aria-pressed="'+(p===pay)+'">'+esc(p)+'</button>').join('')+'</div>':'')+
+   '<label class="f">Note <span class="note">(taille, couleur…)</span><textarea id="cNote" rows="2">'+esc(window._note||'')+'</textarea></label>'+
+   (err?'<p class="err">'+esc(err)+'</p>':'')+
+   '<button class="send" type="button" id="sendWa">'+t('Envoyer ma commande sur WhatsApp')+'</button>'+
+   '<p class="note">Le vendeur reçoit votre commande sur WhatsApp et vous répond pour confirmer. Les prix sont ceux de la boutique.</p>');}
+function keep(){if($('cNom'))window._nom=$('cNom').value;if($('cAdr'))window._adr=$('cAdr').value;if($('cNote'))window._note=$('cNote').value;}
+function message(){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
+  return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', je veux commander :\n'+ls.map(([id,q])=>'• '+q+' × '+art(id).nom+' = '+F(art(id).prix*q)).join('\n')+
+   '\nTotal : '+F(total())+'\n\nNom : '+(window._nom||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
+function send(){keep();if(!(window._nom||'').trim())return showCart(t('Écrivez votre nom.'));
+  if(mode==='livraison'&&!(window._adr||'').trim())return showCart('Écrivez l\'adresse de livraison.');
+  const m=message();
+  if(DEMO){open('<div class="sh"><h2>Message envoyé au vendeur</h2><button class="x" type="button" data-close>×</button></div><p class="note">Dans l\'exemple rien n\'est envoyé. Dans la vraie boutique, WhatsApp s\'ouvre avec ce message, prêt à envoyer :</p><div class="msg">'+esc(m)+'</div>');return;}
+  let n=String(D.whatsapp||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.length===9)n='221'+n;if(n.length<9)return showCart('Le vendeur n\'a pas encore mis son numéro WhatsApp.');
+  location.href='https://wa.me/'+n+'?text='+encodeURIComponent(m);}
+
+/* ---------- Événements ---------- */
+document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}
+  const b=e.target.closest('button,[data-close]');if(!b)return;
+  if(b.dataset.cat){CAT=b.dataset.cat;cats();list();return;}
+  if(b.dataset.see){see(b.dataset.see,+(b.dataset.i||0));return;}
+  if(b.dataset.p){keep();const a=art(b.dataset.p);if(isOut(a))return;cart[a.id]=Math.min((cart[a.id]||0)+1,maxQ(a));list();bar();if(b.hasAttribute('data-in'))showCart();else if(b.hasAttribute('data-close'))close();return;}
+  if(b.dataset.m){keep();const id=b.dataset.m;cart[id]=Math.max(0,(cart[id]||0)-1);if(!cart[id])delete cart[id];list();bar();if(b.hasAttribute('data-in'))showCart();return;}
+  if(b.dataset.mode){keep();mode=b.dataset.mode;showCart();return;}
+  if(b.dataset.pay){keep();pay=b.dataset.pay;showCart();return;}
+  if(b.id==='sendWa'){send();return;}
+  if(b.hasAttribute('data-close')){close();return;}
+  if(b.id==='cartBtn'){showCart();return;}
+  if(b.id==='lang'){LANG=LANG==='fr'?'wo':'fr';all();return;}
+  if(b.id==='bigTxt'){const big=document.documentElement.style.getPropertyValue('--fs')==='19px';document.documentElement.style.setProperty('--fs',big?'16px':'19px');b.textContent=big?'A+':'A−';return;}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+$('q').addEventListener('input',e=>{Q=e.target.value;list();});
+
+/* ---------- Démarrage ---------- */
+const SUPA_URL='https://ncsjgmkrsvtwklfrdbgy.supabase.co',SUPA_KEY='sb_publishable_oDE4BbU6J3RTnce1Oo91cQ_hokWgh0U';
+const CODE=(()=>{try{const q=new URLSearchParams(location.search);return (q.get('c')||q.get('b')||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12)}catch(e){return ''}})();
+function closed(title,txt,retry){document.querySelector('.bar').hidden=true;document.querySelector('.cartbar').hidden=true;
+  $('nom').textContent=title;$('texte').textContent=txt;$('texte').hidden=false;$('chips').innerHTML='';$('logo').textContent='!';
+  $('list').innerHTML=retry?'<p class="empty"><button class="add" type="button" id="retry" style="padding:10px 22px">'+t('Réessayer')+'</button></p>':'';
+  const r=$('retry');if(r)r.onclick=()=>location.reload();}
+async function boot(){
+  if(!CODE||CODE==='DEMO'){D=EX;DEMO=true;$('demo').hidden=false;all();return;}
+  $('nom').textContent='Chargement…';
+  try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),15000);
+    const r=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_page_public',{method:'POST',signal:ac.signal,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_code:CODE})});
+    clearTimeout(to);const j=await r.json();
+    if(!r.ok||!j||!j.ok){if(j&&j.raison==='introuvable')return closed(t('Lien introuvable.'),'Vérifiez le lien reçu, ou demandez-le de nouveau au vendeur.');
+      return closed('Boutique fermée pour le moment','Cette boutique en ligne n\'est pas disponible pour le moment. Contactez directement le vendeur.');}
+    D={nom:j.nom||'Boutique',texte:j.texte||'',adresse:j.adresse||'',whatsapp:j.whatsapp||'',livraison:j.livraison!==false,retrait:j.retrait!==false,
+       paiements:Array.isArray(j.paiements)?j.paiements:[],
+       articles:(Array.isArray(j.articles)?j.articles:[]).filter(a=>a&&a.nom&&a.prix>0).map(a=>({id:String(a.id),nom:a.nom,cat:a.cat||'Articles',prix:+a.prix,old:+a.old||0,desc:a.desc||'',
+         stock:a.stock===null||a.stock===undefined?null:+a.stock,nouveau:!!a.nouveau,img:(Array.isArray(a.img)?a.img:[]).filter(u=>typeof u==='string'&&/^(https:|data:image\/)/.test(u))}))};
+    if(!D.livraison&&!D.retrait)D.livraison=true;
+    DEMO=false;all();if(!D.articles.length)$('list').innerHTML='<p class="empty">Aucun article pour le moment. Revenez bientôt !</p>';}
+  catch(e){closed(t('Pas de connexion internet.'),'Vérifiez internet et réessayez.',true);}}
+boot();
+</script>
+
+</body>
+</html>

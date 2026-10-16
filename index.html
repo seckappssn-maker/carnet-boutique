@@ -276,6 +276,24 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
   .cx-foot{min-height:34px}.cx-foot .t{font-size:20px}
   .cx-l{padding-block:3px}.cx-st button{width:26px;height:26px}.cx-x{width:28px;height:28px}
 }
+
+/* Boutique en ligne */
+.weblink{font:700 15px var(--mono,ui-monospace,monospace);background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:10px;word-break:break-all;user-select:all}
+.webol{margin:0;padding-left:20px;display:grid;gap:4px}
+.webrow{padding:0;gap:0;cursor:default}
+.webck{display:flex;align-items:center;justify-content:center;width:52px;align-self:stretch;flex:none;cursor:pointer}
+.webck input{width:24px;height:24px;accent-color:var(--accent)}
+.webhit{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:12px 14px 12px 0;background:none;border:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.webhit .main{flex:1;min-width:0}
+.webedit{color:var(--accent);font-weight:700;font-size:14px;white-space:nowrap}
+.wph{display:grid;place-items:center;color:var(--muted)}.wph svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.wppics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.wppic{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.wppic img{width:100%;height:100%;object-fit:cover;display:block}
+.wppic .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+.wpmain{position:absolute;left:4px;bottom:4px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px}
+.wpadd{display:grid;place-items:center;text-align:center;font-weight:700;font-size:13px;color:var(--accent);border-style:dashed;cursor:pointer}
+@media (max-width:360px){.wppics{grid-template-columns:repeat(2,1fr)}}
 </style>
 
 <div id="app"></div>
@@ -625,16 +643,16 @@ function docText(kind,s){const L=[];L.push('*'+S.shop.name.toUpperCase()+'*');if
 
 // ===== Icônes =====
 const I={home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',sell:'<path d="M4 4h16v16H4z"/><path d="M12 8v8M8 12h8"/>',debt:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M17 8h5M19.5 5.5v5"/>',stock:'<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
-  scan:'<path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M7 8v8M10 8v8M13 8v8M16 8v8"/>',quote:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h3"/>',truck:'<path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',wallet:'<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H3z"/><path d="M3 7l12-4v4"/><circle cx="16.5" cy="13.5" r="1.2"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'};
+  scan:'<path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M7 8v8M10 8v8M13 8v8M16 8v8"/>',quote:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h3"/>',truck:'<path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',wallet:'<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H3z"/><path d="M3 7l12-4v4"/><circle cx="16.5" cy="13.5" r="1.2"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9M12 3c-2.6 2.6-3.8 5.6-3.8 9s1.2 6.4 3.8 9"/>',gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'};
 const svg=(k,c)=>'<svg viewBox="0 0 24 24"'+(c?' class="'+c+'"':'')+'>'+I[k]+'</svg>';
 const TABS=[['home','Accueil'],['sell','Vendre'],['debt','Clients'],['stock','Stock'],['more','Plus']];
-const MORE_TABS=['more','quotes','sup','exp','report','set'];
+const MORE_TABS=['more','quotes','sup','exp','report','set','web'];
 
 // ===== Rendu principal =====
 function render(){const app=$('app');if(BOOTING){app.innerHTML='<div class="wrap"><div class="empty" style="padding-top:40vh">Chargement…</div></div>';return;}if(SB&&!USER){app.innerHTML=vLogin();return;}if(!S){app.innerHTML=onboard();return;}
   const L=licState();
   const chip=L.st==='blocked'?'<button class="chip bad" data-act="goSub">Abonnement expiré</button>':L.st==='grace'?'<button class="chip bad" data-act="goSub">Expiré · '+(GRACE_DAYS+L.left)+' j</button>':L.st==='warn'?'<button class="chip warn" data-act="goSub">'+(L.trial?'Essai':'Abonné')+' · '+L.left+' j</button>':'<button class="chip ok" data-act="goSub">'+(L.trial?'Essai gratuit':'Abonné')+'</button>';
-  const V={home:vHome,sell:vSell,debt:vDebt,stock:vStock,more:vMore,quotes:vQuotes,sup:vSup,exp:vExp,report:vReport,set:vSet}[tab]||vHome;
+  const V={home:vHome,sell:vSell,debt:vDebt,stock:vStock,more:vMore,quotes:vQuotes,sup:vSup,exp:vExp,report:vReport,set:vSet,web:vWeb}[tab]||vHome;
   app.innerHTML='<div class="wrap"><header class="top"><div class="brand">'+esc(S.shop.name)+'</div><div style="display:flex;gap:6px;align-items:center">'+(USER?'<span id="syncDot" class="sync '+syncSt+'">'+(syncSt==='ok'?'☁ ✓':syncSt==='err'?'☁ !':'☁ …')+'</span>':'')+langBtn()+chip+'</div></header>'+banner(L)+V()+'</div>'+
   '<nav class="tabs">'+TABS.map(([k,l])=>'<button data-tab="'+k+'" aria-current="'+(tab===k||(k==='more'&&MORE_TABS.includes(tab)))+'">'+svg(k)+l+'</button>').join('')+'</nav>';
   if(tab==='sell')renderResults();}
@@ -753,7 +771,7 @@ function vStock(){const q=stockQ.trim().toLowerCase();
 function vMore(){const quotesOpen=S.quotes.filter(q=>q.status!=='vendu').length;const supOwe=S.suppliers.reduce((a,s)=>a+Math.max(0,supBalance(s.id)),0);
   const mStart=effToday().slice(0,8)+'01';const dep=S.expenses.filter(e=>e.date.slice(0,10)>=mStart).reduce((a,e)=>a+e.amount,0);
   const it=(t,ic,b,s)=>'<button class="mi" data-tab="'+t+'">'+svg(ic)+'<b>'+b+'</b><span>'+s+'</span></button>';
-  return '<h2>Plus</h2><div class="menu">'+it('report','chart','Bilan','Bénéfice, clôture, rapport PDF')+it('quotes','quote','Devis',quotesOpen+' en attente')+it('sup','truck','Fournisseurs',supOwe>0?'Je dois '+F(supOwe):'Achats et dettes')+it('exp','wallet','Dépenses','Ce mois : '+F(dep))+it('set','gear','Réglages','Abonnement, code, copie papier')+'</div>'+'<button class="btn" style="margin-top:12px;padding:16px;font-size:17px" data-act="carnetPdf">📄 Imprimer tout mon carnet (PDF)</button>'+
+  return '<h2>Plus</h2><div class="menu">'+it('report','chart','Bilan','Bénéfice, clôture, rapport PDF')+it('quotes','quote','Devis',quotesOpen+' en attente')+it('sup','truck','Fournisseurs',supOwe>0?'Je dois '+F(supOwe):'Achats et dettes')+it('exp','wallet','Dépenses','Ce mois : '+F(dep))+it('set','gear','Réglages','Abonnement, code, copie papier')+it('web','globe','Boutique en ligne',webOn()?'En ligne · '+S.products.filter(p=>p.web).length+' article(s)':'Vendre sur WhatsApp avec un lien')+'</div>'+'<button class="btn" style="margin-top:12px;padding:16px;font-size:17px" data-act="carnetPdf">📄 Imprimer tout mon carnet (PDF)</button>'+
   (S.pin?'<div class="small" style="margin-top:14px">'+(unlocked?'Mode patron ouvert. <button class="back" style="margin:0" data-act="lock">Verrouiller</button>':'Le bilan, les fournisseurs, le stock et les réglages demandent le code patron.')+'</div>':'');}
 function vQuotes(){const qs=S.quotes.slice().reverse();
   return '<button class="back" data-tab="more">‹ Plus</button><h2>Devis / proforma</h2><div class="small" style="margin-bottom:10px">Pour faire un devis : allez dans Vendre, remplissez le panier puis « Faire un devis ».</div>'+
@@ -792,7 +810,7 @@ function vSet(){const L=licState();const msg='Bonjour '+SUPPORT_NAME+', je veux 
   '<div class="small">Prix : '+PRIX_MOIS+' par mois, par Wave ou Orange Money au '+(PAY_NUM||SUPPORT_WA.replace(/^221(\d\d)(\d{3})(\d\d)(\d\d)$/,'+221 $1 $2 $3 $4'))+'. Après le paiement, l\'abonnement s\'active tout seul.</div>'+
   '<a class="btn ghost" target="_blank" rel="noopener" href="'+waLink(SUPPORT_WA,msg)+'">Contacter '+SUPPORT_NAME+' sur WhatsApp</a>'+
   '<button class="btn" data-act="chkSub">Vérifier mon abonnement</button><div class="small">Après le paiement, appuyez sur « Vérifier mon abonnement ».</div></div>'+
-  paperCard()+'<h3>Ma boutique</h3><form id="fShop" class="card stack"><label class="f">Nom<input id="sName" value="'+esc(S.shop.name)+'"></label><label class="f">Propriétaire<input id="sOwner" value="'+esc(S.shop.owner)+'"></label><div class="grid2"><label class="f">Téléphone<input id="sPhone" value="'+esc(S.shop.phone)+'"></label><label class="f">Adresse<input id="sAddr" value="'+esc(S.shop.address)+'"></label></div><label class="f">Message en bas des factures<input id="sFoot" value="'+esc(S.shop.footer||'')+'" placeholder="Merci pour votre confiance !"></label><button class="btn line" type="submit">Enregistrer</button></form>'+payQrCard()+
+  paperCard()+(webOn()?'<h3>Boutique en ligne</h3>'+webLinkCard(false)+'<button class="btn line" data-tab="web" style="margin-top:8px">Gérer la boutique en ligne</button>':'')+'<h3>Ma boutique</h3><form id="fShop" class="card stack"><label class="f">Nom<input id="sName" value="'+esc(S.shop.name)+'"></label><label class="f">Propriétaire<input id="sOwner" value="'+esc(S.shop.owner)+'"></label><div class="grid2"><label class="f">Téléphone<input id="sPhone" value="'+esc(S.shop.phone)+'"></label><label class="f">Adresse<input id="sAddr" value="'+esc(S.shop.address)+'"></label></div><label class="f">Message en bas des factures<input id="sFoot" value="'+esc(S.shop.footer||'')+'" placeholder="Merci pour votre confiance !"></label><button class="btn line" type="submit">Enregistrer</button></form>'+payQrCard()+
   '<h3>Écran de vente</h3><div class="card stack"><div class="seg"><button class="segb" type="button" data-ck="setMode" data-m="normal" aria-pressed="'+(S.sellMode!=='caisse')+'">Écran normal</button><button class="segb" type="button" data-ck="setMode" data-m="caisse" aria-pressed="'+(S.sellMode==='caisse')+'">Mode caisse</button></div><div class="small">Mode caisse : pavé de chiffres et gros boutons de couleur, comme une caisse de magasin. Les gros boutons sont les articles en favori. Vous pouvez changer quand vous voulez.</div></div>'+
   '<h3>Lecteur de code-barres</h3><div class="card stack"><div class="small">Un lecteur Bluetooth (pistolet) marche avec Carnet Boutique. Pour le connecter : allumez-le en mode Bluetooth, puis sur le téléphone allez dans Réglages › Bluetooth et choisissez-le.</div><div class="small">Ensuite, dans Vente, scannez les articles l\'un après l\'autre : chaque scan met l\'article dans le panier. Puis vérifiez et encaissez sur le téléphone.</div><div class="small">Toutes les marques marchent (Netum, Eyoyo, Tera, Inateck, Symcode, Honeywell, Zebra, sans marque…), sur iPhone, Android et caisse POS Android : il faut que le lecteur soit en mode clavier (HID), c\'est le réglage normal.</div><div class="small">Test : restez sur cette page et scannez un code. Le téléphone doit afficher « Lecteur OK ».</div></div>'+
   '<h3>Affichage</h3><div class="card stack"><label class="chk"><input type="checkbox" data-big'+(document.documentElement.classList.contains('big')?' checked':'')+'>Lettres plus grandes</label><div class="small">Pour ceux qui voient mal : tout devient plus grand sur ce téléphone.</div></div>'+
@@ -835,7 +853,7 @@ function showProd(id,pre){const base=id?prod(id):{name:'',code:'',unit:'pièce',
   '<div class="grid2"><label class="f">M\'avertir s\'il reste moins de<input id="prMin" inputmode="numeric" value="'+esc(p.min)+'"></label><label class="f">Date de péremption<input id="prExp" type="date" value="'+esc(p.exp||'')+'"></label></div>'+
   '<label class="chk"><input type="checkbox" id="prFav"'+(p.fav?' checked':'')+'>Mettre un bouton dans « Vente rapide »</label></div></details>'+
   '<button class="btn" data-act="saveProd" data-id="'+(id||'')+'">Enregistrer</button></div>'+
-  (id?'<div style="margin-top:10px"><button class="btn line" data-act="lblOpen" data-id="'+id+'">🏷 Étiquette prix (40 mm)</button></div>':'')+
+  (id&&webOn()?'<div style="margin-top:10px"><button class="btn ghost" data-act="webProd" data-id="'+id+'">🌐 Boutique en ligne'+(prod(id)&&prod(id).web?' · visible':' · pas visible')+'</button></div>':'')+(id?'<div style="margin-top:10px"><button class="btn line" data-act="lblOpen" data-id="'+id+'">🏷 Étiquette prix (40 mm)</button></div>':'')+
   (id?'<h3>Marchandise arrivée</h3><div class="card stack"><label class="f">Pièces reçues<input id="prIn" inputmode="decimal" placeholder="Ex : 50"></label>'+(p.pack>0?'<label class="f">Ou cartons reçus (× '+p.pack+')<input id="prInPk" inputmode="numeric" placeholder="Ex : 2"></label>':'')+'<button class="btn ghost" data-act="stockIn" data-id="'+id+'">Ajouter au stock</button></div><div id="delZone" style="margin-top:14px"><button class="btn danger" data-act="askDel" data-id="'+id+'">Supprimer l\'article</button></div>':''));
   updGain();}
 function buyIsCarton(){const b=$('buyC');return b&&!b.hidden;}
@@ -1182,7 +1200,7 @@ function endRestock(){if(!RS||!RS.active){closeSheet();return;}RS.active=false;c
 function toast(m){clearTimeout(toastT);let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}t.textContent=m;toastT=setTimeout(()=>t.remove(),2800);}
 function copyText(txt){try{navigator.clipboard.writeText(txt).then(()=>toast('Copié'),()=>fbCopy(txt));}catch(e){fbCopy(txt);}}
 function fbCopy(txt){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copié');}catch(e){toast('Sélectionnez le texte et copiez-le');}ta.remove();}
-function go(t){readDraft();const prot={report:1,sup:1,set:1};if(prot[t]&&t!=='set')return needPin(()=>{tab=t;closeSheet();render();scrollTo(0,0);});
+function go(t){readDraft();const prot={report:1,sup:1,set:1,web:1};if(prot[t]&&t!=='set')return needPin(()=>{tab=t;closeSheet();render();scrollTo(0,0);});
   if(t==='set'&&canWrite())return needPin(()=>{tab=t;closeSheet();render();scrollTo(0,0);});tab=t;closeSheet();render();scrollTo(0,0);}
 function start(shop,demo,trialDays){const t=todayISO();S=migrate({v:2,shop,lic:{id:newShopId(),install:t,trialEnd:addDays(t,trialDays===undefined?TRIAL_DAYS:trialDays),exp:'',code:'',maxSeen:t},pin:''});
   if(demo){const P=[['Riz parfumé 25 kg','sac',12500,14000,13500,40,10,'',''],['Huile Dinor 1 L','litre',1150,1300,1250,24,6,'6111001000108',addDays(t,200)],['Sucre 1 kg','kg',650,750,700,3,10,'',''],['Lait en poudre 400 g','boîte',1900,2250,0,12,4,'3033710074617',addDays(t,9)],['Savon Madar','pièce',250,300,0,60,20,'','',24,true],['Bonbons','pièce',15,25,0,180,50,'','',100,true],['Sachet d\'eau','sachet',35,50,0,90,30,'','',30,true],['Pain','pièce',150,175,0,20,5,'','',0,true],['Biscuits Choco','paquet',100,150,0,30,10,'',addDays(t,-2)],['Ciment 50 kg','sac',4100,4500,4350,120,20,'','']];
@@ -1465,6 +1483,121 @@ Object.assign(WO,{"Nouveau : Mode caisse":"Lu bees : Mode kees","Essayer":"Jéem
   "Vous pouvez choisir plus tard dans Plus › Réglages.":"Mën nga ko tànn ci kanam ci Plus › Réglages."});
 render();boot();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+// ===== Boutique en ligne (Plus › Boutique en ligne) : seulement pour ceux qui l'activent =====
+// Les articles de la page sont ceux du stock : même prix, même quantité. Rien ne change pour les autres boutiques.
+const WEB_PAY=['Wave','Orange Money','Espèces','Free Money'];
+let WEBCODE=null,WEBCODE_ERR=false,WQ='';
+const webOn=()=>!!(S&&S.web&&S.web.on);
+function webDef(){S.web=Object.assign({on:false,nom:'',texte:'',adresse:'',wa:'',livraison:true,retrait:true,pay:['Wave','Orange Money','Espèces'],stock:true},S.web||{});return S.web;}
+function webUrl(){if(!WEBCODE)return '';const u=new URL('shop.html',location.href);u.search='?c='+WEBCODE;u.hash='';return u.href;}
+function webCodeKey(){return 'carnetBoutique.webcode.'+(USER?USER.id:'x');}
+async function webLoadCode(){if(WEBCODE)return WEBCODE;try{WEBCODE=localStorage.getItem(webCodeKey())||null;}catch(e){}
+  if(!SB||!USER){WEBCODE_ERR=!WEBCODE;return WEBCODE;}
+  try{const r=await SB.from('boutique_abonnements').select('page_code').eq('user_id',USER.id).maybeSingle();
+    if(r.error)throw r.error;if(r.data&&r.data.page_code){WEBCODE=r.data.page_code;WEBCODE_ERR=false;try{localStorage.setItem(webCodeKey(),WEBCODE);}catch(e){}}
+    else WEBCODE_ERR=!WEBCODE;}catch(e){WEBCODE_ERR=!WEBCODE;}
+  return WEBCODE;}
+const webPhotos=p=>Array.isArray(p.photos)?p.photos.filter(u=>typeof u==='string'&&/^https:/.test(u)):[];
+const webPic=p=>{const u=webPhotos(p)[0]||p.img;return u?'<img class="thumb" src="'+esc(u)+'" alt="" loading="lazy">':'<span class="thumb wph">'+svg('globe')+'</span>';};
+function webLinkCard(full){const u=webUrl();
+  if(!u)return '<div class="card stack"><div class="small">'+(WEBCODE_ERR?'Lien pas encore prêt : vérifiez internet, puis rouvrez cette page. (Si ça continue, écrivez à '+esc(SUPPORT_NAME)+'.)':'Chargement de votre lien…')+'</div></div>';
+  return '<div class="card stack"><div class="small">Votre lien à mettre sur votre statut WhatsApp, TikTok, Facebook :</div><div class="weblink">'+esc(u)+'</div>'+
+   '<div class="grid2"><button class="btn" data-act="webShare">📲 Partager</button><button class="btn ghost" data-act="webCopy">Copier le lien</button></div>'+
+   (full?'<a class="btn line" href="'+esc(u)+'" target="_blank" rel="noopener">Voir ma page comme un client</a>':'')+'</div>';}
+function vWeb(){const W=webDef();
+  if(!W.on){if(SB&&USER)webLoadCode();
+    return '<button class="back" data-tab="more">‹ Plus</button><h2>Boutique en ligne</h2>'+
+    '<div class="card stack"><b style="font-size:18px">Vous vendez aussi sur WhatsApp, TikTok ou Facebook ?</b>'+
+    '<div>Avec la boutique en ligne, vous avez <b>votre propre lien</b>. Vos clients voient vos articles avec les photos et les prix, choisissent, et la commande arrive sur <b>votre WhatsApp</b>.</div>'+
+    '<ol class="webol"><li>Activez la boutique en ligne.</li><li>Choisissez les articles à montrer et ajoutez de belles photos.</li><li>Copiez votre lien et mettez-le sur votre statut WhatsApp.</li></ol>'+
+    '<div class="small">Les articles sont ceux de votre stock : quand vous vendez, le stock baisse tout seul, comme d\'habitude. Seuls les articles que vous choisissez sont visibles. Vos ventes, crédits, prix d\'achat et bénéfices restent privés.</div>'+
+    '<button class="btn" data-act="webOn">Activer ma boutique en ligne</button>'+
+    '<div class="small">Vous ne vendez pas en ligne ? Ce n\'est pas nécessaire : votre Carnet Boutique marche comme avant.</div></div>';}
+  if(!WEBCODE&&!WEBCODE_ERR)webLoadCode().then(()=>{if(tab==='web')render();});
+  const vis=S.products.filter(p=>p.web).length;const q=WQ.trim().toLowerCase();
+  const ps=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q)).sort((a,b)=>(b.web?1:0)-(a.web?1:0)||a.name.localeCompare(b.name));
+  return '<button class="back" data-tab="more">‹ Plus</button><h2>Boutique en ligne</h2>'+
+  '<div class="stats"><div class="stat"><div class="k">Articles en ligne</div><div class="v">'+vis+'</div><div class="small">sur '+S.products.length+' dans le stock</div></div><div class="stat"><div class="k">Ma page</div><div class="v" style="font-size:18px">'+(canWrite()?'✅ Ouverte':'⛔ Fermée')+'</div><div class="small">'+(canWrite()?'les clients peuvent commander':'payez l\'abonnement')+'</div></div></div>'+
+  '<h3>Mon lien</h3>'+webLinkCard(true)+
+  '<h3>Mes articles</h3>'+(vis?'':'<div class="banner warn"><span>Aucun article en ligne : cochez ci-dessous les articles à montrer à vos clients.</span></div>')+
+  '<div class="grid2" style="margin-bottom:10px"><button class="btn ghost" data-act="prod" data-id="">+ Nouvel article</button><button class="btn line" data-act="webAll">'+(vis<S.products.length?'Tout mettre en ligne':'Tout retirer')+'</button></div>'+
+  (S.products.length>6?'<input id="webQ" type="search" placeholder="Chercher un article" value="'+esc(WQ)+'" autocomplete="off" style="margin-bottom:10px">':'')+
+  (ps.length?'<div class="list">'+ps.map(p=>'<div class="row webrow">'+
+    '<label class="webck" aria-label="En ligne"><input type="checkbox" data-webvis="'+p.id+'"'+(p.web?' checked':'')+'></label>'+
+    '<button class="webhit" data-act="webProd" data-id="'+p.id+'">'+webPic(p)+'<div class="main"><div class="t">'+esc(p.name)+(p.web?'<span class="tag g">en ligne</span>':'')+'</div><div class="s">'+F(p.price)+(p.old>p.price?' · <s>'+F(p.old)+'</s>':'')+(p.cat?' · '+esc(p.cat):'')+(webPhotos(p).length?' · '+webPhotos(p).length+' photo(s)':'')+(W.stock&&!(p.qty>0)?' · <b>épuisé</b>':'')+'</div></div><span class="webedit">Modifier ›</span></button></div>').join('')+'</div>'
+   :'<div class="list"><div class="empty">'+(q?'Aucun article trouvé.':'Ajoutez d\'abord vos articles avec « + Nouvel article ».')+'</div></div>')+
+  '<h3>Ma page</h3><form id="fWeb" class="card stack">'+
+   '<label class="f">Nom affiché<input id="wNom" value="'+esc(W.nom||'')+'" placeholder="'+esc(S.shop.name)+'"></label>'+
+   '<label class="f"><span>Présentation <span class="opt">(ce que vous vendez)</span></span><textarea id="wTexte" rows="3" placeholder="Ex : Téléphones, vêtements et parfums. Livraison partout à Dakar.">'+esc(W.texte||'')+'</textarea></label>'+
+   '<div class="grid2"><label class="f">Quartier / ville<input id="wAdr" value="'+esc(W.adresse||'')+'" placeholder="'+esc(S.shop.address||'Ex : Médina, Dakar')+'"></label><label class="f">WhatsApp des commandes<input id="wWa" inputmode="tel" value="'+esc(W.wa||'')+'" placeholder="'+esc(S.shop.phone||'77 000 00 00')+'"></label></div>'+
+   '<div class="f" style="gap:6px"><span>Comment le client reçoit ?</span><label class="chk"><input type="checkbox" id="wLiv"'+(W.livraison?' checked':'')+'>Livraison</label><label class="chk"><input type="checkbox" id="wRet"'+(W.retrait?' checked':'')+'>Il passe récupérer</label></div>'+
+   '<div class="f" style="gap:6px"><span>Paiements acceptés</span>'+WEB_PAY.map(m=>'<label class="chk"><input type="checkbox" data-wpay="'+esc(m)+'"'+((W.pay||[]).includes(m)?' checked':'')+'>'+esc(m)+'</label>').join('')+'</div>'+
+   '<label class="chk"><input type="checkbox" id="wStock"'+(W.stock?' checked':'')+'>Montrer « Épuisé » quand le stock est à 0</label>'+
+   '<div class="small">Si vous ne comptez pas votre stock, décochez : tous les articles en ligne seront disponibles.</div>'+
+   '<button class="btn" type="submit">Enregistrer</button></form>'+
+  '<h3>Arrêter</h3><div class="card stack" id="webOffZone"><div class="small">Votre page ne sera plus visible. Vos articles restent dans le stock.</div><button class="btn line" data-act="webAskOff">Désactiver la boutique en ligne</button></div>';}
+
+// Fiche « en ligne » d'un article : photos, description, rayon, prix barré
+let WP=null;
+function webProd(id){const p=prod(id);if(!p)return;WP={id,photos:webPhotos(p).slice(0,4),busy:0};
+  const cats=[...new Set(S.products.map(x=>x.cat).filter(Boolean))];
+  openSheet(p.name,'<div class="card stack big-form">'+
+   '<label class="chk" style="font-size:17px"><input type="checkbox" id="wpOn"'+(p.web?' checked':'')+'><b>Visible dans ma boutique en ligne</b></label>'+
+   '<div class="f" style="gap:8px"><span>Photos <span class="opt">(jusqu\'à 4, la 1re est la principale)</span></span><div id="wpPics" class="wppics">'+wpPicsHTML()+'</div></div>'+
+   '<label class="f"><span>Description <span class="opt">(taille, couleur, mémoire, contenance…)</span></span><textarea id="wpDesc" rows="3" placeholder="Ex : taille M, couleur bleue, 128 Go, 100 ml…">'+esc(p.desc||'')+'</textarea></label>'+
+   '<label class="f"><span>Rayon <span class="opt">(pour ranger la page)</span></span><input id="wpCat" list="wpCats" value="'+esc(p.cat||'')+'" placeholder="Ex : Téléphones, Robes, Parfums…"><datalist id="wpCats">'+cats.map(c=>'<option value="'+esc(c)+'">').join('')+'</datalist></label>'+
+   '<div class="grid2"><label class="f">Prix de vente (F)<input id="wpPrice" inputmode="numeric" value="'+esc(p.price||'')+'"></label><label class="f"><span>Ancien prix <span class="opt">(promo)</span></span><input id="wpOld" inputmode="numeric" value="'+esc(p.old||'')+'" placeholder="barré sur la page"></label></div>'+
+   '<button class="btn" data-act="webProdSave" data-id="'+id+'">Enregistrer</button></div>'+
+   '<div class="small" style="margin-top:10px">Stock : <b>'+q2(p.qty)+' '+esc(p.unit)+'</b>. Pour changer la quantité ou le prix d\'achat, ouvrez l\'article dans Stock.</div>');}
+function wpPicsHTML(){if(!WP)return '';
+  return WP.photos.map((u,i)=>'<div class="wppic"><img src="'+esc(u)+'" alt=""><button type="button" class="x" data-act="wpDel" data-i="'+i+'" aria-label="Enlever">×</button>'+(i?'':'<span class="wpmain">1re</span>')+'</div>').join('')+
+   (WP.busy?'<div class="wppic wpadd">Envoi…</div>':'')+
+   (WP.photos.length+WP.busy<4?'<label class="wppic wpadd">＋ Photo<input type="file" id="wpFile" accept="image/*" hidden></label>':'');}
+function wpRefresh(){const b=$('wpPics');if(b)b.innerHTML=wpPicsHTML();}
+function bigPhoto(blob){return new Promise((ok,ko)=>{const u=URL.createObjectURL(blob);const im=new Image();
+  im.onload=()=>{const k=Math.min(1,1000/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);
+    const tryQ=q=>c.toBlob(b=>{if(!b)return ko();if(b.size>380000&&q>0.5)return tryQ(q-0.12);ok(b);},'image/jpeg',q);tryQ(0.82);};
+  im.onerror=()=>{URL.revokeObjectURL(u);ko();};im.src=u;});}
+async function wpUpload(file){if(!WP)return;if(!SB||!USER)return toast('Connectez-vous à internet pour ajouter des photos');if(!w())return;
+  const cur=WP;cur.busy++;wpRefresh();
+  try{const b=await bigPhoto(file);const path=USER.id+'/'+uid()+'.jpg';
+    const r=await SB.storage.from('boutique-photos').upload(path,b,{contentType:'image/jpeg',upsert:false});if(r.error)throw r.error;
+    const url=SB.storage.from('boutique-photos').getPublicUrl(path).data.publicUrl;cur.photos.push(url);
+    const p=prod(cur.id);if(p&&!p.img){try{p.img=await shrink(b,260);}catch(e){}}}
+  catch(e){const m=String(e&&e.message||'');toast(/bucket|not found|policy|security|row-level/i.test(m)?'Photos pas encore activées : écrivez à '+SUPPORT_NAME:'Photo pas envoyée : vérifiez internet et réessayez');}
+  finally{cur.busy--;if(WP===cur)wpRefresh();}}
+function webShareLink(){const u=webUrl();if(!u)return;const txt=(S.web.nom||S.shop.name)+' : découvrez nos articles et commandez sur WhatsApp 👇\n'+u;
+  if(navigator.share){navigator.share({text:txt}).catch(()=>{});return;}
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');}
+
+// Clics de la boutique en ligne
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||!S)return;const a=el.dataset.act,id=el.dataset.id;
+  if(a==='webOn'){if(!w())return;webDef().on=true;if(!S.web.wa)S.web.wa=S.shop.phone||'';save();webLoadCode().then(()=>render());render();scrollTo(0,0);toast('Boutique en ligne activée');}
+  else if(a==='webAskOff'){$('webOffZone').innerHTML='<div class="banner bad"><span>Désactiver la boutique en ligne ?</span><div class="grid2"><button class="btn danger" data-act="webOff">Oui, désactiver</button><button class="btn line" data-tab="web">Non</button></div></div>';}
+  else if(a==='webOff'){if(!w())return;S.web.on=false;save();render();toast('Boutique en ligne désactivée');}
+  else if(a==='webCopy'){const u=webUrl();if(u)copyText(u);}
+  else if(a==='webShare')webShareLink();
+  else if(a==='webAll'){if(!w())return;const all=S.products.some(p=>!p.web);S.products.forEach(p=>p.web=all);save();render();toast(all?'Tous les articles sont en ligne':'Articles retirés de la page');}
+  else if(a==='webProd'){webProd(id);}
+  else if(a==='wpDel'){if(!WP)return;WP.photos.splice(+el.dataset.i,1);wpRefresh();}
+  else if(a==='webProdSave'){if(!w())return;const p=prod(id);if(!p||!WP)return;if(WP.busy)return toast('Attendez la fin de l\'envoi de la photo');
+    const pr=num(val('wpPrice'));if(pr<=0)return toast('Mettez le prix de vente');const old=num(val('wpOld'));
+    const gone=webPhotos(p).filter(u=>!WP.photos.includes(u));
+    Object.assign(p,{web:!!($('wpOn')&&$('wpOn').checked),photos:WP.photos.slice(0,4),desc:val('wpDesc').trim().slice(0,400),cat:val('wpCat').trim().slice(0,60),price:pr,old:old>pr?old:0});
+    save();WP=null;closeSheet();render();toast('Article enregistré');
+    if(gone.length&&SB&&USER){const pre=SB.storage.from('boutique-photos').getPublicUrl('x').data.publicUrl.replace(/x$/,'');
+      const paths=gone.filter(u=>u.startsWith(pre)).map(u=>u.slice(pre.length)).filter(x=>x.startsWith(USER.id+'/'));if(paths.length)SB.storage.from('boutique-photos').remove(paths).catch(()=>{});}}});
+document.addEventListener('change',e=>{const t=e.target;if(!S)return;
+  if(t.dataset&&t.dataset.webvis){if(!w()){t.checked=!t.checked;return;}const p=prod(t.dataset.webvis);if(!p)return;p.web=t.checked;save();render();toast(t.checked?'En ligne : '+p.name:'Retiré de la page : '+p.name);}
+  if(t.id==='wpFile'&&t.files&&t.files[0]){const f=t.files[0];t.value='';wpUpload(f);}});
+document.addEventListener('input',e=>{if(e.target.id==='webQ'){WQ=e.target.value;const pos=e.target.selectionStart;render();const i=$('webQ');if(i){i.focus();try{i.setSelectionRange(pos,pos);}catch(x){}}}});
+document.addEventListener('submit',e=>{if(e.target.id!=='fWeb')return;e.preventDefault();if(!w())return;const W=webDef();
+  Object.assign(W,{nom:val('wNom').trim().slice(0,80),texte:val('wTexte').trim().slice(0,600),adresse:val('wAdr').trim().slice(0,120),wa:val('wWa').trim().slice(0,30),
+    livraison:$('wLiv').checked,retrait:$('wRet').checked,stock:$('wStock').checked,pay:[...document.querySelectorAll('[data-wpay]')].filter(x=>x.checked).map(x=>x.dataset.wpay)});
+  if(!W.livraison&&!W.retrait){W.livraison=true;}
+  save();render();toast('Page enregistrée');});
+
 </script>
 
 </body></html>
