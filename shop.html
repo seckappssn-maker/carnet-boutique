@@ -20,6 +20,9 @@
 <title>Boutique en ligne</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@500;600;700;800&display=swap">
+<title>Boutique en ligne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@500;600;700;800&display=swap">
 <style>
 /* Vitrine de boutique : bandeau vert Carnet, rayon d'articles en 2 colonnes comme une étagère, panier en bas */
 :root{
@@ -245,22 +248,39 @@ function showCart(err){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(i
    '<div class="tot"><span>'+t('Total')+'</span><span>'+F(total())+'</span></div>'+
    (opts.length>1?'<div class="seg">'+opts.map(o=>'<button type="button" data-mode="'+o[0]+'" aria-pressed="'+(o[0]===mode)+'">'+esc(o[1])+'</button>').join('')+'</div>':'')+
    '<label class="f">'+t('Votre nom')+'<input id="cNom" autocomplete="name" value="'+esc(window._nom||'')+'"></label>'+
+   '<label class="f">'+t('Votre téléphone')+'<input id="cTel" type="tel" inputmode="tel" autocomplete="tel" placeholder="77 000 00 00" value="'+esc(window._tel||'')+'"></label>'+
    (mode==='livraison'?'<label class="f">'+t('Adresse ou repère')+'<input id="cAdr" placeholder="Ex : Parcelles U17, près de la pharmacie" value="'+esc(window._adr||'')+'"></label>':'')+
    ((D.paiements||[]).length?'<div class="ftitle">Paiement</div><div class="seg'+(D.paiements.length>2?' three':'')+'">'+D.paiements.map(p=>'<button type="button" data-pay="'+esc(p)+'" aria-pressed="'+(p===pay)+'">'+esc(p)+'</button>').join('')+'</div>':'')+
    '<label class="f">Note <span class="note">(taille, couleur…)</span><textarea id="cNote" rows="2">'+esc(window._note||'')+'</textarea></label>'+
    (err?'<p class="err">'+esc(err)+'</p>':'')+
    '<button class="send" type="button" id="sendWa">'+t('Envoyer ma commande sur WhatsApp')+'</button>'+
    '<p class="note">Le vendeur reçoit votre commande sur WhatsApp et vous répond pour confirmer. Les prix sont ceux de la boutique.</p>');}
-function keep(){if($('cNom'))window._nom=$('cNom').value;if($('cAdr'))window._adr=$('cAdr').value;if($('cNote'))window._note=$('cNote').value;}
-function message(){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
-  return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', je veux commander :\n'+ls.map(([id,q])=>'• '+q+' × '+art(id).nom+' = '+F(art(id).prix*q)).join('\n')+
-   '\nTotal : '+F(total())+'\n\nNom : '+(window._nom||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
-function send(){keep();if(!(window._nom||'').trim())return showCart(t('Écrivez votre nom.'));
+function keep(){if($('cNom'))window._nom=$('cNom').value;if($('cTel'))window._tel=$('cTel').value;if($('cAdr'))window._adr=$('cAdr').value;if($('cNote'))window._note=$('cNote').value;}
+function message(no){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
+  return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', je veux commander'+(no?' (commande N° '+no+')':'')+' :\n'+ls.map(([id,q])=>'• '+q+' × '+art(id).nom+' = '+F(art(id).prix*q)).join('\n')+
+   '\nTotal : '+F(total())+'\n\nNom : '+(window._nom||'').trim()+'\nTél : '+(window._tel||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
+let SENDING=false;
+async function send(){if(SENDING)return;keep();if(!(window._nom||'').trim())return showCart(t('Écrivez votre nom.'));
+  if(String(window._tel||'').replace(/\D/g,'').length<9)return showCart('Écrivez votre numéro de téléphone.');
   if(mode==='livraison'&&!(window._adr||'').trim())return showCart('Écrivez l\'adresse de livraison.');
-  const m=message();
-  if(DEMO){open('<div class="sh"><h2>Message envoyé au vendeur</h2><button class="x" type="button" data-close>×</button></div><p class="note">Dans l\'exemple rien n\'est envoyé. Dans la vraie boutique, WhatsApp s\'ouvre avec ce message, prêt à envoyer :</p><div class="msg">'+esc(m)+'</div>');return;}
+  if(DEMO){open('<div class="sh"><h2>Message envoyé au vendeur</h2><button class="x" type="button" data-close>×</button></div><p class="note">Dans l\'exemple rien n\'est envoyé. Dans la vraie boutique, la commande arrive dans l\'app du vendeur, son téléphone sonne, et WhatsApp s\'ouvre avec ce message :</p><div class="msg">'+esc(message(12))+'</div>');return;}
   let n=String(D.whatsapp||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.length===9)n='221'+n;if(n.length<9)return showCart('Le vendeur n\'a pas encore mis son numéro WhatsApp.');
-  location.href='https://wa.me/'+n+'?text='+encodeURIComponent(m);}
+  SENDING=true;const b=$('sendWa');if(b){b.disabled=true;b.textContent='Envoi…';}
+  let no='';
+  try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),12000);
+    const r=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_commande_public',{method:'POST',signal:ac.signal,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({p_code:CODE,p_cmd:{nom:window._nom.trim(),tel:String(window._tel).trim(),mode,adresse:(window._adr||'').trim(),paiement:pay,note:(window._note||'').trim(),
+        lignes:Object.entries(cart).filter(([id,q])=>q>0&&art(id)).map(([id,q])=>({id,q}))}})});
+    clearTimeout(to);const j=await r.json();
+    if(j&&j.ok){no=String(j.no);
+      if(j.alerte){const txt='Nouvelle commande N° '+j.no+' · '+F(j.total)+' · '+window._nom.trim();const u='https://ntfy.sh/'+j.alerte;
+        try{if(!(navigator.sendBeacon&&navigator.sendBeacon(u,txt)))fetch(u,{method:'POST',body:txt,keepalive:true,mode:'no-cors'}).catch(()=>{});}catch(e){}}}}
+  catch(e){}
+  const m=message(no);cart={};bar();list();SENDING=false;
+  open('<div class="sh"><h2>'+(no?'Commande N° '+esc(no)+' envoyée':'Commande prête')+'</h2><button class="x" type="button" data-close>×</button></div>'+
+   '<p>'+(no?'Le vendeur a reçu votre commande. WhatsApp s\'ouvre pour lui envoyer le message.':'WhatsApp s\'ouvre : envoyez le message au vendeur.')+'</p>'+
+   '<a class="send" style="display:block;text-align:center;text-decoration:none" href="https://wa.me/'+n+'?text='+encodeURIComponent(m)+'">'+t('Envoyer ma commande sur WhatsApp')+'</a>');
+  setTimeout(()=>{location.href='https://wa.me/'+n+'?text='+encodeURIComponent(m);},400);}
 
 /* ---------- Événements ---------- */
 document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}

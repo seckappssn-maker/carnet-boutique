@@ -278,6 +278,13 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
 }
 
 /* Boutique en ligne */
+.cmdchip{background:var(--accent-soft);color:var(--accent);font-weight:800}
+.cmdchip.hot{background:#D9381E;color:#fff;box-shadow:0 0 0 3px rgba(217,56,30,.25)}
+@media (prefers-reduced-motion:no-preference){.cmdchip.hot{animation:cmdpulse 1.6s ease-in-out infinite}}
+@keyframes cmdpulse{50%{box-shadow:0 0 0 7px rgba(217,56,30,.12)}}
+.cmdbig{margin:4px 0 6px;font-size:17px;padding:15px}
+.cmdbig.hot{background:#D9381E;border-color:#D9381E;color:#fff}
+.cmdhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .weblink{font:700 15px var(--mono,ui-monospace,monospace);background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:10px;word-break:break-all;user-select:all}
 .webol{margin:0;padding-left:20px;display:grid;gap:4px}
 .webrow{padding:0;gap:0;cursor:default}
@@ -646,14 +653,14 @@ const I={home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',sell:'<path 
   scan:'<path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M7 8v8M10 8v8M13 8v8M16 8v8"/>',quote:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h3"/>',truck:'<path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',wallet:'<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H3z"/><path d="M3 7l12-4v4"/><circle cx="16.5" cy="13.5" r="1.2"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9M12 3c-2.6 2.6-3.8 5.6-3.8 9s1.2 6.4 3.8 9"/>',gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'};
 const svg=(k,c)=>'<svg viewBox="0 0 24 24"'+(c?' class="'+c+'"':'')+'>'+I[k]+'</svg>';
 const TABS=[['home','Accueil'],['sell','Vendre'],['debt','Clients'],['stock','Stock'],['more','Plus']];
-const MORE_TABS=['more','quotes','sup','exp','report','set','web'];
+const MORE_TABS=['more','quotes','sup','exp','report','set','web','cmd'];
 
 // ===== Rendu principal =====
 function render(){const app=$('app');if(BOOTING){app.innerHTML='<div class="wrap"><div class="empty" style="padding-top:40vh">Chargement…</div></div>';return;}if(SB&&!USER){app.innerHTML=vLogin();return;}if(!S){app.innerHTML=onboard();return;}
   const L=licState();
   const chip=L.st==='blocked'?'<button class="chip bad" data-act="goSub">Abonnement expiré</button>':L.st==='grace'?'<button class="chip bad" data-act="goSub">Expiré · '+(GRACE_DAYS+L.left)+' j</button>':L.st==='warn'?'<button class="chip warn" data-act="goSub">'+(L.trial?'Essai':'Abonné')+' · '+L.left+' j</button>':'<button class="chip ok" data-act="goSub">'+(L.trial?'Essai gratuit':'Abonné')+'</button>';
-  const V={home:vHome,sell:vSell,debt:vDebt,stock:vStock,more:vMore,quotes:vQuotes,sup:vSup,exp:vExp,report:vReport,set:vSet,web:vWeb}[tab]||vHome;
-  app.innerHTML='<div class="wrap"><header class="top"><div class="brand">'+esc(S.shop.name)+'</div><div style="display:flex;gap:6px;align-items:center">'+(USER?'<span id="syncDot" class="sync '+syncSt+'">'+(syncSt==='ok'?'☁ ✓':syncSt==='err'?'☁ !':'☁ …')+'</span>':'')+langBtn()+chip+'</div></header>'+banner(L)+V()+'</div>'+
+  const V={home:vHome,sell:vSell,debt:vDebt,stock:vStock,more:vMore,quotes:vQuotes,sup:vSup,exp:vExp,report:vReport,set:vSet,web:vWeb,cmd:vCmd}[tab]||vHome;
+  app.innerHTML='<div class="wrap"><header class="top"><div class="brand">'+esc(S.shop.name)+'</div><div style="display:flex;gap:6px;align-items:center">'+(USER?'<span id="syncDot" class="sync '+syncSt+'">'+(syncSt==='ok'?'☁ ✓':syncSt==='err'?'☁ !':'☁ …')+'</span>':'')+webCmdBtn()+langBtn()+chip+'</div></header>'+banner(L)+V()+'</div>'+
   '<nav class="tabs">'+TABS.map(([k,l])=>'<button data-tab="'+k+'" aria-current="'+(tab===k||(k==='more'&&MORE_TABS.includes(tab)))+'">'+svg(k)+l+'</button>').join('')+'</nav>';
   if(tab==='sell')renderResults();}
 function banner(L){
@@ -1265,6 +1272,7 @@ document.addEventListener('click',e=>{
     d.lines.forEach(l=>{if(l.pid){const p=prod(l.pid);if(p){p.qty=q2(p.qty-l.qty);l.cost=p.cost||0;}}});
     S.seq.sale++;const s={id:uid(),no:S.seq.sale,date:nowStamp(),client:c?c.name:'',clientId:c?c.id:null,phone:d.phone.trim(),lines:d.lines.map(l=>({pid:l.pid,name:l.name,unit:l.unit,qty:l.qty,price:l.price,cost:l.cost||0})),total,paid,given:cc.given,change:cc.change,mode:paid===0?'Crédit':d.mode==='Crédit'?'Espèces':d.mode,due:paid<total?d.due:''};
     if(d.fromQuote){const q=S.quotes.find(x=>x.id===d.fromQuote);if(q)q.status='vendu';}
+    if(d.fromWeb)webCmdSet(d.fromWeb,'vendu');
     S.sales.push(s);save();sayChange(s);draft=null;tab='home';render();showDoc('s',s);},
   saveQuote:()=>{readDraft();if(!w())return;const d=draft;d.lines=d.lines.filter(l=>l.qty>0);if(!d.lines.length)return toast('Panier vide');
     S.seq.quote++;const q={id:uid(),no:S.seq.quote,date:nowStamp(),client:d.client.trim(),phone:d.phone.trim(),lines:d.lines.map(l=>({...l})),total:d.lines.reduce((s,l)=>s+l.qty*l.price,0),status:'ouvert'};
@@ -1518,6 +1526,7 @@ function vWeb(){const W=webDef();
   const ps=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q)).sort((a,b)=>(b.web?1:0)-(a.web?1:0)||a.name.localeCompare(b.name));
   return '<button class="back" data-tab="more">‹ Plus</button><h2>Boutique en ligne</h2>'+
   '<div class="stats"><div class="stat"><div class="k">Articles en ligne</div><div class="v">'+vis+'</div><div class="small">sur '+S.products.length+' dans le stock</div></div><div class="stat"><div class="k">Ma page</div><div class="v" style="font-size:18px">'+(canWrite()?'✅ Ouverte':'⛔ Fermée')+'</div><div class="small">'+(canWrite()?'les clients peuvent commander':'payez l\'abonnement')+'</div></div></div>'+
+  '<button class="btn cmdbig'+(WCMD.length?' hot':'')+'" data-tab="cmd">🛒 Commandes en ligne'+(WCMD.length?' · '+WCMD.length+' nouvelle'+(WCMD.length>1?'s':''):'')+'</button>'+
   '<h3>Mon lien</h3>'+webLinkCard(true)+
   '<h3>Mes articles</h3>'+(vis?'':'<div class="banner warn"><span>Aucun article en ligne : cochez ci-dessous les articles à montrer à vos clients.</span></div>')+
   '<div class="grid2" style="margin-bottom:10px"><button class="btn ghost" data-act="prod" data-id="">+ Nouvel article</button><button class="btn line" data-act="webAll">'+(vis<S.products.length?'Tout mettre en ligne':'Tout retirer')+'</button></div>'+
@@ -1535,6 +1544,7 @@ function vWeb(){const W=webDef();
    '<label class="chk"><input type="checkbox" id="wStock"'+(W.stock?' checked':'')+'>Montrer « Épuisé » quand le stock est à 0</label>'+
    '<div class="small">Si vous ne comptez pas votre stock, décochez : tous les articles en ligne seront disponibles.</div>'+
    '<button class="btn" type="submit">Enregistrer</button></form>'+
+  '<h3>Alerte sur le téléphone</h3>'+webAlertCard()+
   '<h3>Arrêter</h3><div class="card stack" id="webOffZone"><div class="small">Votre page ne sera plus visible. Vos articles restent dans le stock.</div><button class="btn line" data-act="webAskOff">Désactiver la boutique en ligne</button></div>';}
 
 // Fiche « en ligne » d'un article : photos, description, rayon, prix barré
@@ -1573,7 +1583,7 @@ function webShareLink(){const u=webUrl();if(!u)return;const txt=(S.web.nom||S.sh
 
 // Clics de la boutique en ligne
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||!S)return;const a=el.dataset.act,id=el.dataset.id;
-  if(a==='webOn'){if(!w())return;webDef().on=true;if(!S.web.wa)S.web.wa=S.shop.phone||'';save();webLoadCode().then(()=>render());render();scrollTo(0,0);toast('Boutique en ligne activée');}
+  if(a==='webOn'){if(!w())return;webDef().on=true;if(!S.web.wa)S.web.wa=S.shop.phone||'';webNtfy();save();webCmdLoad(true);webLoadCode().then(()=>render());render();scrollTo(0,0);toast('Boutique en ligne activée');}
   else if(a==='webAskOff'){$('webOffZone').innerHTML='<div class="banner bad"><span>Désactiver la boutique en ligne ?</span><div class="grid2"><button class="btn danger" data-act="webOff">Oui, désactiver</button><button class="btn line" data-tab="web">Non</button></div></div>';}
   else if(a==='webOff'){if(!w())return;S.web.on=false;save();render();toast('Boutique en ligne désactivée');}
   else if(a==='webCopy'){const u=webUrl();if(u)copyText(u);}
@@ -1597,6 +1607,57 @@ document.addEventListener('submit',e=>{if(e.target.id!=='fWeb')return;e.preventD
     livraison:$('wLiv').checked,retrait:$('wRet').checked,stock:$('wStock').checked,pay:[...document.querySelectorAll('[data-wpay]')].filter(x=>x.checked).map(x=>x.dataset.wpay)});
   if(!W.livraison&&!W.retrait){W.livraison=true;}
   save();render();toast('Page enregistrée');});
+
+// ===== Commandes en ligne : arrivent de la page clients, seulement si la boutique en ligne est activée =====
+// Le stock baisse quand le vendeur encaisse la commande (Confirmer → panier de vente → Encaisser).
+let WCMD=[],WCMD_SEEN=null,WCMD_ASK=null,WCMD_T=null;
+function webNtfy(){if(!S.web.ntfy){const a='abcdefghijkmnpqrstuvwxyz23456789';let r='cb-';const b=new Uint32Array(16);try{crypto.getRandomValues(b);}catch(e){b.forEach((_,i)=>b[i]=Math.random()*1e9);}b.forEach(x=>r+=a[x%a.length]);S.web.ntfy=r;save();}return S.web.ntfy;}
+function webCmdBtn(){if(!webOn())return '';const n=WCMD.length;
+  return '<button class="chip cmdchip'+(n?' hot':'')+'" data-tab="cmd" id="cmdBtn" aria-label="Commandes en ligne : '+n+'">🛒'+(n?' '+n:'')+'</button>';}
+function webCmdPaint(){const b=$('cmdBtn');if(b){b.outerHTML=webCmdBtn();}}
+async function webCmdLoad(force){if(!S||!webOn()||!SB||!USER)return;if(!force&&document.visibilityState==='hidden')return;
+  try{const r=await SB.from('boutique_commandes').select('id,data,statut,created_at').eq('user_id',USER.id).eq('statut','nouveau').order('created_at',{ascending:false}).limit(50);
+    if(r.error)throw r.error;const before=new Set(WCMD.map(c=>c.id));WCMD=r.data||[];
+    const fresh=WCMD.filter(c=>!before.has(c.id));
+    if(WCMD_SEEN!==null&&fresh.length){toast('🛒 Nouvelle commande en ligne : '+fresh[0].data.nom);try{navigator.vibrate&&navigator.vibrate([120,80,120]);}catch(e){}}
+    WCMD_SEEN=true;if(tab==='cmd'||tab==='web')render();else webCmdPaint();}
+  catch(e){}}
+async function webCmdSet(id,st){WCMD=WCMD.filter(c=>c.id!==id);webCmdPaint();
+  if(!SB||!USER)return;try{await SB.from('boutique_commandes').update({statut:st}).eq('id',id).eq('user_id',USER.id);}catch(e){}}
+function cmdWaText(c){const d=c.data;return 'Bonjour '+d.nom+', c\'est '+(S.web.nom||S.shop.name)+'. Nous avons bien reçu votre commande N° '+c.id+' ('+F(d.total)+') :\n'+
+  d.lignes.map(l=>'• '+l.q+' × '+l.nom).join('\n')+'\n'+(d.mode==='retrait'?'Vous pouvez passer la récupérer.':'Nous vous livrons bientôt.')+' Merci !';}
+function cmdAgo(iso){const m=Math.round((Date.now()-new Date(iso).getTime())/60000);return m<1?'à l\'instant':m<60?'il y a '+m+' min':m<1440?'il y a '+Math.round(m/60)+' h':fdate(iso.slice(0,10));}
+function vCmd(){if(SB&&USER&&WCMD_SEEN===null)webCmdLoad(true);
+  return '<button class="back" data-tab="web">‹ Boutique en ligne</button><h2>Commandes en ligne</h2>'+
+  '<div class="small" style="margin-bottom:10px">Les commandes de votre page arrivent ici. <b>Confirmer</b> met les articles dans le panier : vous encaissez et le stock baisse. Le reçu part sur WhatsApp comme une vente normale.</div>'+
+  '<button class="btn line" data-act="cmdReload" style="margin-bottom:12px">↻ Actualiser</button>'+
+  (WCMD.length?WCMD.map(c=>{const d=c.data||{};const low=(d.lignes||[]).filter(l=>{const p=prod(l.id);return S.web.stock!==false&&p&&p.qty<l.q;});
+    return '<div class="card stack cmdcard"><div class="cmdhead"><b>N° '+c.id+' · '+esc(d.nom)+'</b><span class="small">'+cmdAgo(c.created_at)+'</span></div>'+
+     '<div class="small">📞 '+esc(d.tel)+' · '+(d.mode==='retrait'?'Il passe récupérer':'Livraison'+(d.adresse?' : '+esc(d.adresse):''))+(d.paiement?' · '+esc(d.paiement):'')+'</div>'+
+     '<div>'+(d.lignes||[]).map(l=>'<div class="kv"><span>'+l.q+' × '+esc(l.nom)+'</span><b>'+F(l.prix*l.q)+'</b></div>').join('')+'<div class="total"><span>TOTAL</span><b>'+F(d.total)+'</b></div></div>'+
+     (d.note?'<div class="small">📝 '+esc(d.note)+'</div>':'')+
+     (low.length?'<div class="banner warn"><span>Stock pas suffisant : '+low.map(l=>esc(l.nom)).join(', ')+'</span></div>':'')+
+     '<button class="btn" data-act="cmdOk" data-id="'+c.id+'">Confirmer et encaisser</button>'+
+     '<div class="grid2"><a class="btn ghost" target="_blank" rel="noopener" href="'+waLink(d.tel,cmdWaText(c))+'">💬 WhatsApp</a>'+
+     (WCMD_ASK===c.id?'<button class="btn danger" data-act="cmdNo" data-id="'+c.id+'">Oui, refuser</button>':'<button class="btn line" data-act="cmdAskNo" data-id="'+c.id+'">Refuser</button>')+'</div></div>';}).join('<div style="height:12px"></div>')
+   :'<div class="list"><div class="empty">Aucune nouvelle commande.<br>Partagez votre lien pour recevoir des commandes.</div></div>')+
+  '<h3>Alerte sur le téléphone</h3>'+webAlertCard();}
+function webAlertCard(){const tp=webNtfy();
+  return '<div class="card stack"><div class="small">Pour que le téléphone <b>sonne à chaque commande</b>, même quand l\'app est fermée : installez l\'app gratuite <b>ntfy</b> (App Store ou Play Store), touchez <b>+</b> et écrivez ce nom :</div>'+
+   '<div class="weblink">'+esc(tp)+'</div><button class="btn ghost" data-act="cmdCopyTopic">Copier le nom</button>'+
+   '<div class="small">Gardez-le pour vous : l\'alerte dit seulement « nouvelle commande », les détails sont dans l\'app.</div></div>';}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||!S)return;const a=el.dataset.act,id=+el.dataset.id;
+  if(a==='cmdReload'){webCmdLoad(true).then(()=>toast('À jour'));}
+  else if(a==='cmdCopyTopic'){copyText(webNtfy());}
+  else if(a==='cmdAskNo'){WCMD_ASK=id;render();}
+  else if(a==='cmdNo'){WCMD_ASK=null;webCmdSet(id,'refuse');render();toast('Commande refusée');}
+  else if(a==='cmdOk'){if(!w())return;const c=WCMD.find(x=>x.id===id);if(!c)return;const d=c.data;
+    draft=newDraft();Object.assign(draft,{lines:d.lignes.map(l=>{const p=prod(l.id);return {pid:p?p.id:null,name:p?p.name:l.nom,unit:p?p.unit:'pièce',qty:l.q,price:l.prix};}),
+      client:d.nom||'',phone:d.tel||'',fromWeb:c.id});
+    if(d.paiement==='Wave'||d.paiement==='Orange Money')draft.mode=d.paiement;
+    tab='sell';closeSheet();render();scrollTo(0,0);toast('Commande N° '+c.id+' dans le panier : vérifiez et encaissez');}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')webCmdLoad();});
+clearInterval(WCMD_T);WCMD_T=setInterval(()=>webCmdLoad(),45000);setTimeout(()=>webCmdLoad(true),2500);
 
 </script>
 
