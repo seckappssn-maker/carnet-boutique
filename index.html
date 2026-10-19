@@ -1,4 +1,9 @@
-<!doctype html><html lang="fr"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html><html lang="fr"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.pushcard{display:flex;flex-direction:column;gap:10px;background:var(--pc-bg,transparent);border:1px solid var(--pc-line,rgba(128,128,128,.35));border-radius:14px;padding:14px;margin:12px 0}
+.pushh{font-size:17px}.pushnote{font-size:14px;opacity:.85;line-height:1.4}.pushwarn{color:#b45309;opacity:1;font-weight:600}
+.pushon{font-weight:800}.pushrow{display:flex;gap:8px;flex-wrap:wrap}
+.pushbtn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;font-size:16px;min-height:46px;cursor:pointer;background:var(--pc-accent,#0B6E5B);color:#fff}
+.pushbtn.ghost{background:transparent;color:inherit;border:1.5px solid var(--pc-line,rgba(128,128,128,.45));flex:1}
+</style>
 <script>(function(){if(!document.querySelector('meta[name="viewport"]')){var m=document.createElement('meta');m.name='viewport';m.content='width=device-width, initial-scale=1, viewport-fit=cover';(document.head||document.documentElement).appendChild(m);}})();</script>
 <title>Carnet Boutique</title>
 <meta name="description" content="Gère tes crédits, ventes et stock sur ton téléphone. En français et en wolof. Essai gratuit 1 semaine.">
@@ -15,6 +20,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Carnet Boutique">
 <meta name="theme-color" content="#0B6E5B">
+<link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 <link rel="icon" href="apple-touch-icon.png?v=2">
 </head>
@@ -1545,7 +1551,8 @@ function vWeb(){const W=webDef();
    '<label class="chk"><input type="checkbox" id="wStock"'+(W.stock?' checked':'')+'>Montrer « Épuisé » quand le stock est à 0</label>'+
    '<div class="small">Si vous ne comptez pas votre stock, décochez : tous les articles en ligne seront disponibles.</div>'+
    '<button class="btn" type="submit">Enregistrer</button></form>'+
-  '<h3>Alerte sur le téléphone</h3>'+webAlertCard()+
+  '<h3>Notifications</h3>'+pushCard()+
+  '<h3>Autre alerte (avec l\'app ntfy)</h3>'+webAlertCard()+
   '<h3>Arrêter</h3><div class="card stack" id="webOffZone"><div class="small">Votre page ne sera plus visible. Vos articles restent dans le stock.</div><button class="btn line" data-act="webAskOff">Désactiver la boutique en ligne</button></div>';}
 
 // Fiche « en ligne » d'un article : photos, description, rayon, prix barré
@@ -1690,6 +1697,44 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if
     tab='sell';closeSheet();render();scrollTo(0,0);toast('Commande N° '+c.id+' dans le panier : vérifiez et encaissez');}});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')webCmdLoad();});
 clearInterval(WCMD_T);WCMD_T=setInterval(()=>webCmdLoad(),45000);setTimeout(()=>webCmdLoad(true),2500);
+
+/* ---------- Notifications sur le téléphone (même app fermée) ---------- */
+const PUSH_PUB='BLcHXOxXIRWkIBKizjrAQ0pRpNURUxUGiIlzYgHCGH-aAKLeiGsoL_thiuzOrPAUaF6lWhgOtBFTajqAcmO6sB8',PUSH_APP='boutique',PUSH_KEY='seckPush.'+PUSH_APP;let pushSynced=false,pushBusy=false;
+const pushIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const pushHome=()=>!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));
+const pushOk=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+const pushDemo=()=>(typeof DEMO!=='undefined'&&DEMO)||!SB||!USER;
+function pushB64(s){s=String(s).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+const pushFlag=()=>{try{return localStorage.getItem(PUSH_KEY)==='1'}catch(e){return false}};
+async function pushReg(){let r=await navigator.serviceWorker.getRegistration();if(!r)r=await navigator.serviceWorker.register('sw.js');
+  return await Promise.race([navigator.serviceWorker.ready,new Promise((_,j)=>setTimeout(()=>j(new Error('SW')),15000))])}
+async function pushSub(){if(!pushOk())return null;try{const r=await navigator.serviceWorker.getRegistration();return r?await r.pushManager.getSubscription():null}catch(e){return null}}
+function pushCard(){return '<div class="pushcard"><b class="pushh">🔔 Notifications des commandes en ligne</b><div class="pushnote">Recevez une notification sur ce téléphone à chaque commande de votre boutique en ligne, même quand l\'app est fermée.</div><div id="pushbox"><div class="pushnote">Un instant…</div></div></div>'}
+async function fillPush(){const box=document.getElementById('pushbox');if(!box||pushBusy)return;let h='';
+  if(pushDemo())h='<div class="pushnote">Disponible avec votre compte (pas en démo).</div>';
+  else if(!pushOk())h='<div class="pushnote pushwarn">'+(pushIOS()&&!pushHome()?'Sur iPhone : touchez <b>Partager</b> ⬆️ puis <b>Sur l\'écran d\'accueil</b>. Ouvrez l\'app depuis l\'icône, connectez-vous, puis revenez ici.':'Ce navigateur ne reçoit pas les notifications. Sur Android, utilisez Chrome.')+'</div>';
+  else if(Notification.permission==='denied')h='<div class="pushnote pushwarn">Les notifications sont bloquées. Autorisez-les dans les réglages du téléphone (Notifications), puis réessayez.</div>';
+  else{const s=Notification.permission==='granted'&&pushFlag()?await pushSub():null;
+    h=s?'<div class="pushon">✅ Activées sur ce téléphone</div><div class="pushrow"><button type="button" class="pushbtn ghost" id="push_test">Tester</button><button type="button" class="pushbtn ghost" id="push_off">Désactiver</button></div>'
+      :'<button type="button" class="pushbtn" id="push_on">Activer les notifications</button>'}
+  const b=document.getElementById('pushbox');if(!b)return;b.innerHTML=h;
+  const on=document.getElementById('push_on');if(on)on.onclick=()=>pushEnable(on);
+  const off=document.getElementById('push_off');if(off)off.onclick=async()=>{off.disabled=true;await pushDrop();toast('Notifications désactivées sur ce téléphone');fillPush()};
+  const ts=document.getElementById('push_test');if(ts)ts.onclick=async()=>{ts.disabled=true;try{const s=await pushSub();if(!s)throw 0;
+    let r=await SB.rpc('seck_push_save',{p_app:PUSH_APP,p_sub:s.toJSON()});if(r.error)throw r.error;r=await SB.rpc('seck_push_test',{p_app:PUSH_APP});if(r.error)throw r.error;toast('Test envoyé : la notification arrive dans quelques secondes')}catch(e){toast('Pas de connexion, réessayez')}ts.disabled=false}}
+async function pushEnable(btn){if(pushDemo())return;btn.disabled=true;pushBusy=true;
+  try{const perm=await Notification.requestPermission();if(perm!=='granted'){toast('Notifications refusées');throw 0}
+    const reg=await pushReg();let s=await reg.pushManager.getSubscription();
+    if(!s)s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushB64(PUSH_PUB)});
+    const r=await SB.rpc('seck_push_save',{p_app:PUSH_APP,p_sub:s.toJSON()});if(r.error)throw r.error;
+    try{localStorage.setItem(PUSH_KEY,'1')}catch(e){}pushSynced=true;toast('Notifications activées ✅')}
+  catch(e){if(e)toast('Impossible d\'activer les notifications. Réessayez.')}
+  pushBusy=false;fillPush()}
+async function pushDrop(){const s=await pushSub();try{localStorage.removeItem(PUSH_KEY)}catch(e){}pushSynced=false;if(!s)return;
+  try{if(SB&&USER)await SB.rpc('seck_push_drop',{p_endpoint:s.endpoint})}catch(e){}try{await s.unsubscribe()}catch(e){}}
+async function pushResync(){if(pushSynced||pushDemo()||!pushFlag()||!pushOk()||Notification.permission!=='granted')return;pushSynced=true;
+  try{const s=await pushSub();if(s){const r=await SB.rpc('seck_push_save',{p_app:PUSH_APP,p_sub:s.toJSON()});if(r.error)pushSynced=false}}catch(e){pushSynced=false}}
+{const _r=render;render=function(){const x=_r.apply(this,arguments);setTimeout(()=>{fillPush();pushResync()},0);return x}}
 
 </script>
 
