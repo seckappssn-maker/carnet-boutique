@@ -55,7 +55,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .tools{display:flex;justify-content:flex-end;gap:8px}
 .tbtn{border:1.5px solid rgba(255,255,255,.7);background:transparent;color:#fff;border-radius:999px;padding:6px 14px;font-weight:800;font-size:14px}
 .id{display:flex;gap:14px;align-items:center}
-.logo{width:64px;height:64px;border-radius:18px;background:#FCEE45;color:#0B4A3E;display:grid;place-items:center;font:800 26px var(--display);flex:none;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.logo{width:64px;height:64px;border-radius:18px;background:#FCEE45;color:#0B4A3E;display:grid;place-items:center;font:800 26px var(--display);flex:none;box-shadow:0 6px 16px rgba(0,0,0,.2);overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.vit{max-width:860px;margin:14px auto 0;padding-inline:16px}
+.slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:18px;scrollbar-width:none}.slides::-webkit-scrollbar{display:none}
+.slides img{flex:0 0 100%;width:100%;aspect-ratio:16/9;object-fit:cover;scroll-snap-align:center;background:#eee}
+.sdots{display:flex;justify-content:center;gap:6px;margin-top:8px}.sdots i{width:8px;height:8px;border-radius:50%;background:#c9d6d2}.sdots i.on{background:#0B6E5B}
 .hero h1{font-size:clamp(28px,7vw,40px);font-weight:800;letter-spacing:-.02em}
 .hero .txt{color:#DDF1EA;max-width:40em}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -148,6 +153,7 @@ footer b{color:var(--ink)}
   <p class="txt" id="texte"></p>
   <div class="chips" id="chips"></div>
 </div></header>
+<div class="vit" id="vit" hidden></div>
 
 <div class="bar"><div class="wrap">
   <input class="search" id="q" type="search" placeholder="Chercher un article" autocomplete="off">
@@ -175,7 +181,7 @@ function drawing(kind,bg,c,c2){ // dessins d'exemple : téléphone, robe, chauss
   }[kind]||'';
   return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="200" height="200" fill="'+bg+'"/><ellipse cx="100" cy="182" rx="62" ry="8" fill="#000" opacity=".1"/>'+k+'</svg>';
 }
-const EX={nom:'Boutique Awa (exemple)',texte:'Téléphones, vêtements, chaussures et parfums. Livraison partout à Dakar, envoi en région.',
+const EX={nom:'Boutique Awa (exemple)',photos:['data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 563"><rect width="1000" height="563" fill="#0B6E5B"/><circle cx="800" cy="120" r="220" fill="#FCEE45" opacity=".55"/><text x="70" y="300" font-family="Arial,sans-serif" font-size="60" font-weight="800" fill="#fff">Nouveautés de la semaine</text></svg>'),'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 563"><rect width="1000" height="563" fill="#084C3F"/><circle cx="800" cy="120" r="220" fill="#3FB596" opacity=".55"/><text x="70" y="300" font-family="Arial,sans-serif" font-size="60" font-weight="800" fill="#fff">-20 % sur les parfums</text></svg>')],texte:'Téléphones, vêtements, chaussures et parfums. Livraison partout à Dakar, envoi en région.',
   whatsapp:'770000000',adresse:'Médina, Dakar',livraison:true,retrait:true,paiements:['Wave','Orange Money','Espèces'],
   articles:[
   {id:'a1',nom:'Téléphone 128 Go',cat:'Téléphones',prix:95000,old:110000,desc:'Comme neuf, batterie 92 %, avec chargeur.',stock:2,img:[drawing('phone','#DCE9F6','#2F6FB0'),drawing('phone','#E8EEF4','#7A8C9E')]},
@@ -207,8 +213,20 @@ const count=()=>Object.values(cart).reduce((x,y)=>x+y,0);
 const total=()=>Object.entries(cart).reduce((s,[id,q])=>s+(art(id)?art(id).prix*q:0),0);
 
 /* ---------- Affichage ---------- */
+/* logo et photos du vendeur (s'il en a mis) */
+const okImg=u=>typeof u==='string'&&/^(https:|data:image\/)/.test(u);
+let vitDone=false;
+function vitrine(){if(vitDone)return;vitDone=true;const ph=(Array.isArray(D.photos)?D.photos:[]).filter(okImg).slice(0,3),v=$('vit');if(!ph.length)return;
+  v.innerHTML='<div class="slides" id="slides">'+ph.map((u,i)=>'<img src="'+esc(u)+'" alt="Photo '+(i+1)+'"'+(i?' loading="lazy"':'')+'>').join('')+'</div>'+(ph.length>1?'<div class="sdots">'+ph.map((u,i)=>'<i class="'+(i?'':'on')+'"></i>').join('')+'</div>':'');
+  v.hidden=false;if(ph.length<2)return;
+  const sl=$('slides'),dots=[...v.querySelectorAll('.sdots i')];let cur=0,touched=0;
+  const mark=()=>{cur=Math.round(sl.scrollLeft/sl.clientWidth);dots.forEach((d,i)=>d.classList.toggle('on',i===cur));};
+  sl.addEventListener('scroll',()=>{clearTimeout(sl._t);sl._t=setTimeout(mark,80);});sl.addEventListener('touchstart',()=>{touched=Date.now();},{passive:true});
+  setInterval(()=>{if(document.hidden||Date.now()-touched<8000)return;sl.scrollTo({left:((cur+1)%ph.length)*sl.clientWidth,behavior:'smooth'});},4500);}
 function head(){$('nom').textContent=D.nom;$('texte').textContent=D.texte||'';$('texte').hidden=!D.texte;
-  $('logo').textContent=(D.nom.replace(/\(.*\)/,'').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2)||'B').toUpperCase();
+  if(okImg(D.logo))$('logo').innerHTML='<img src="'+esc(D.logo)+'" alt="Logo '+esc(D.nom)+'">';
+  else $('logo').textContent=(D.nom.replace(/\(.*\)/,'').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2)||'B').toUpperCase();
+  vitrine();
   const c=[];if(D.adresse)c.push('📍 '+D.adresse);if(D.livraison)c.push(t('Livraison'));if(D.retrait)c.push('Retrait sur place');(D.paiements||[]).forEach(p=>c.push(p));
   $('chips').innerHTML=c.map(x=>'<span>'+esc(x)+'</span>').join('');
   document.title=D.nom.replace(/\s*\(exemple\)/,'');}
@@ -320,6 +338,9 @@ async function boot(){
        articles:(Array.isArray(j.articles)?j.articles:[]).filter(a=>a&&a.nom&&a.prix>0).map(a=>({id:String(a.id),nom:a.nom,cat:a.cat||'Articles',prix:+a.prix,old:+a.old||0,desc:a.desc||'',
          stock:a.stock===null||a.stock===undefined?null:+a.stock,nouveau:!!a.nouveau,img:(Array.isArray(a.img)?a.img:[]).filter(u=>typeof u==='string'&&/^(https:|data:image\/)/.test(u))}))};
     if(!D.livraison&&!D.retrait)D.livraison=true;
+    if(j.logo!==undefined||j.photos!==undefined){D.logo=j.logo;D.photos=j.photos;}
+    else{try{const v=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_vitrine',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_code:CODE})});
+      if(v.ok){const x=await v.json();if(x&&typeof x==='object'){D.logo=x.logo;D.photos=x.photos;}}}catch(e){}}
     DEMO=false;all();if(!D.articles.length)$('list').innerHTML='<p class="empty">Aucun article pour le moment. Revenez bientôt !</p>';}
   catch(e){closed(t('Pas de connexion internet.'),'Vérifiez internet et réessayez.',true);}}
 boot();

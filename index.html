@@ -1535,6 +1535,7 @@ function vWeb(){const W=webDef();
     '<label class="webck" aria-label="En ligne"><input type="checkbox" data-webvis="'+p.id+'"'+(p.web?' checked':'')+'></label>'+
     '<button class="webhit" data-act="webProd" data-id="'+p.id+'">'+webPic(p)+'<div class="main"><div class="t">'+esc(p.name)+(p.web?'<span class="tag g">en ligne</span>':'')+'</div><div class="s">'+F(p.price)+(p.old>p.price?' · <s>'+F(p.old)+'</s>':'')+(p.cat?' · '+esc(p.cat):'')+(webPhotos(p).length?' · '+webPhotos(p).length+' photo(s)':'')+(W.stock&&!(p.qty>0)?' · <b>épuisé</b>':'')+'</div></div><span class="webedit">Modifier ›</span></button></div>').join('')+'</div>'
    :'<div class="list"><div class="empty">'+(q?'Aucun article trouvé.':'Ajoutez d\'abord vos articles avec « + Nouvel article ».')+'</div></div>')+
+  '<h3>Logo et photos</h3>'+webVitCard()+
   '<h3>Ma page</h3><form id="fWeb" class="card stack">'+
    '<label class="f">Nom affiché<input id="wNom" value="'+esc(W.nom||'')+'" placeholder="'+esc(S.shop.name)+'"></label>'+
    '<label class="f"><span>Présentation <span class="opt">(ce que vous vendez)</span></span><textarea id="wTexte" rows="3" placeholder="Ex : Téléphones, vêtements et parfums. Livraison partout à Dakar.">'+esc(W.texte||'')+'</textarea></label>'+
@@ -1563,6 +1564,37 @@ function wpPicsHTML(){if(!WP)return '';
   return WP.photos.map((u,i)=>'<div class="wppic"><img src="'+esc(u)+'" alt=""><button type="button" class="x" data-act="wpDel" data-i="'+i+'" aria-label="Enlever">×</button>'+(i?'':'<span class="wpmain">1re</span>')+'</div>').join('')+
    (WP.busy?'<div class="wppic wpadd">Envoi…</div>':'')+
    (WP.photos.length+WP.busy<4?'<label class="wppic wpadd">＋ Photo<input type="file" id="wpFile" accept="image/*" hidden></label>':'');}
+// Logo et photos en haut de la page clients (bucket seck-photos)
+let WV_BUSY='';
+const wvOk=u=>typeof u==='string'&&/^(https:|data:image\/)/.test(u);
+function webVitCard(){const W=webDef(),ph=(W.photos||[]).filter(wvOk);
+  return '<div class="card stack"><div class="small">Ce que vos clients voient en haut de votre page. Si vous ne mettez rien, la page reste comme elle est.</div>'+
+   '<b>Logo</b><div class="wppics">'+(wvOk(W.logo)?'<div class="wppic"><img src="'+esc(W.logo)+'" alt="Logo" style="object-fit:contain;background:#fff"><button type="button" class="x" data-act="wvDel" data-k="logo" aria-label="Enlever le logo">×</button></div>':'')+
+   (WV_BUSY==='logo'?'<div class="wppic wpadd">Envoi…</div>':'<label class="wppic wpadd">'+(wvOk(W.logo)?'Changer':'＋ Logo')+'<input type="file" id="wvLogo" accept="image/*" hidden></label>')+'</div>'+
+   '<b>Photos (3 maximum)</b><div class="small">Votre boutique, une nouveauté, une promo… Elles défilent en haut de la page.</div><div class="wppics">'+
+   ph.map((u,i)=>'<div class="wppic"><img src="'+esc(u)+'" alt=""><button type="button" class="x" data-act="wvDel" data-k="photo" data-i="'+i+'" aria-label="Enlever">×</button>'+(i?'<button type="button" class="wpmain" data-act="wvFirst" data-i="'+i+'" style="border:0;cursor:pointer">★ 1re</button>':'<span class="wpmain">1re</span>')+'</div>').join('')+
+   (WV_BUSY==='photo'?'<div class="wppic wpadd">Envoi…</div>':ph.length<3?'<label class="wppic wpadd">＋ Photo<input type="file" id="wvPhoto" accept="image/*" hidden></label>':'')+'</div></div>';}
+function wvShrink(file,W,H,q,fit){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=()=>rej(new Error('img'));im.onload=()=>{
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  const sc=fit==='contain'?Math.min(W/im.width,H/im.height):Math.max(W/im.width,H/im.height),w2=im.width*sc,h2=im.height*sc;x.drawImage(im,(W-w2)/2,(H-h2)/2,w2,h2);
+  const url=c.toDataURL('image/jpeg',q);if(c.toBlob)c.toBlob(b=>res({blob:b,url}),'image/jpeg',q);else res({blob:null,url});};im.src=r.result;};r.readAsDataURL(file);});}
+function wvRm(u){if(!SB||!USER||!u)return;const mark='/object/public/seck-photos/';if(!u.includes(mark))return;
+  const p=decodeURIComponent(u.split(mark)[1].split('?')[0]);if(p.startsWith(USER.id+'/'))SB.storage.from('seck-photos').remove([p]).catch(()=>{});}
+async function wvUpload(file,kind){if(!w()||WV_BUSY)return;const W=webDef();W.photos=Array.isArray(W.photos)?W.photos:[];
+  if(kind==='photo'&&W.photos.length>=3)return toast('3 photos maximum');
+  WV_BUSY=kind;render();
+  try{const logo=kind==='logo',r=await wvShrink(file,logo?320:1000,logo?320:563,logo?.85:.74,logo?'contain':'cover');let url=r.url;
+    if(SB&&USER){if(!r.blob)throw new Error('blob');const path=USER.id+'/'+uid()+'.jpg';
+      const up=await SB.storage.from('seck-photos').upload(path,r.blob,{contentType:'image/jpeg',cacheControl:'31536000',upsert:false});if(up.error)throw up.error;
+      url=SB.storage.from('seck-photos').getPublicUrl(path).data.publicUrl;}
+    const W2=webDef();W2.photos=Array.isArray(W2.photos)?W2.photos:[];if(logo){wvRm(W2.logo);W2.logo=url;}else W2.photos.push(url);save();toast(logo?'Logo ajouté':'Photo ajoutée');}
+  catch(e){const m=String(e&&e.message||'');toast(/img|blob/.test(m)?'Photo illisible, essayez une autre':/bucket|not found/i.test(m)?'Photos pas encore activées : écrivez à '+SUPPORT_NAME:/policy|security|row-level/i.test(m)?'Photo refusée':'Photo pas envoyée : vérifiez internet et réessayez');}
+  finally{WV_BUSY='';render();}}
+document.addEventListener('change',e=>{const t=e.target;if(!S||!t||(t.id!=='wvLogo'&&t.id!=='wvPhoto')||!t.files||!t.files[0])return;const f=t.files[0];t.value='';wvUpload(f,t.id==='wvLogo'?'logo':'photo');});
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act="wvDel"],[data-act="wvFirst"]');if(!el||!S||!w())return;const W=webDef();W.photos=W.photos||[];
+  if(el.dataset.act==='wvFirst'){const i=+el.dataset.i;W.photos.unshift(W.photos.splice(i,1)[0]);}
+  else if(el.dataset.k==='logo'){wvRm(W.logo);W.logo='';}else{wvRm(W.photos.splice(+el.dataset.i,1)[0]);}
+  save();render();});
 function wpRefresh(){const b=$('wpPics');if(b)b.innerHTML=wpPicsHTML();}
 function bigPhoto(blob){return new Promise((ok,ko)=>{const u=URL.createObjectURL(blob);const im=new Image();
   im.onload=()=>{const k=Math.min(1,1000/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);
