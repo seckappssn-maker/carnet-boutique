@@ -2208,6 +2208,41 @@ function loadQR(){if(HQ())return Promise.resolve();if(QRP)return QRP;
 {const _si=scanImage;scanImage=async function(){await loadQR();return _si.apply(this,arguments);};}
 setTimeout(()=>{try{(window.requestIdleCallback||setTimeout)(()=>loadQR());}catch(e){}},6000);
 
+/* ---------- Mode, cosmétiques, artisan : plusieurs photos par article (galerie : plusieurs d'un coup) ---------- */
+const photosMulti=()=>['mode','cosm','art'].includes(btype());
+let PPH=null;
+{const _sp=showProd;showProd=function(id,pre){const p=id?prod(id):null;
+  if(photosMulti()){if(!(pre&&PPH&&PPH.id===(id||'')))PPH={id:id||'',photos:p&&Array.isArray(p.photos)?p.photos.filter(u=>typeof u==='string').slice(0,4):(p&&p.img?[p.img]:[]),busy:0};}else PPH=null;
+  return _sp.apply(this,arguments);};}
+{const _pi=prImgHTML;prImgHTML=function(){if(!PPH)return _pi.apply(this,arguments);const n=PPH.photos.length;
+  return '<div class="f" style="gap:8px"><span>Photos <span class="opt">(jusqu\'à 4 · la 1re est la principale)</span></span><div class="wppics">'+
+    PPH.photos.map((u,i)=>'<div class="wppic"><img src="'+esc(u)+'" alt=""><button type="button" class="x" data-pph-del="'+i+'" aria-label="Enlever">×</button>'+(i?'<button type="button" class="wpmain" data-pph-first="'+i+'" style="border:0;cursor:pointer">★ 1re</button>':'<span class="wpmain">1re</span>')+'</div>').join('')+
+    (PPH.busy?'<div class="wppic wpadd">Envoi…</div>':'')+'</div>'+
+    (n+PPH.busy<4?'<div class="grid2"><label class="btn ghost">📷 Prendre une photo<input type="file" id="prPhM" accept="image/*" capture="environment" hidden></label><label class="btn ghost">🖼 Galerie<input type="file" id="prPhMG" accept="image/*" multiple hidden></label></div><div class="small">Dans la galerie, vous pouvez choisir plusieurs photos d\'un coup. Elles servent aussi pour votre boutique en ligne.</div>':'')+'</div>';};}
+async function pphAdd(files){const cur=PPH;if(!cur)return;files=[...files].slice(0,Math.max(0,4-cur.photos.length-cur.busy));if(!files.length)return toast('4 photos au maximum');
+  const online=!!(SB&&USER&&!XDEMO);
+  for(const f of files){cur.busy++;if(PPH===cur)updImgBox();
+    try{const b=await bigPhoto(f);let url;
+      if(online){const path=USER.id+'/'+uid()+'.jpg';const r=await SB.storage.from('boutique-photos').upload(path,b,{contentType:'image/jpeg',upsert:false});if(r.error)throw r.error;url=SB.storage.from('boutique-photos').getPublicUrl(path).data.publicUrl;}
+      else url=await shrink(b,700);
+      cur.photos.push(url);if(cur.photos.length===1){try{PIMG=await shrink(b,260);}catch(e){PIMG=url;}}}
+    catch(e){const m=String(e&&e.message||'');toast(/bucket|not found|policy|security|row-level/i.test(m)?'Photos pas encore activées : écrivez à '+SUPPORT_NAME:'Photo pas envoyée : vérifiez internet et réessayez');}
+    finally{cur.busy--;if(PPH===cur)updImgBox();}}}
+document.addEventListener('change',e=>{const t=e.target;if(!t||(t.id!=='prPhM'&&t.id!=='prPhMG')||!t.files||!t.files.length)return;const fs=[...t.files];t.value='';pphAdd(fs);});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pph-del],[data-pph-first]');if(!b||!PPH)return;
+  if(b.dataset.pphDel!=null){const i=+b.dataset.pphDel;PPH.photos.splice(i,1);if(i===0)PIMG=PPH.photos[0]||'';}
+  else{const i=+b.dataset.pphFirst;PPH.photos.unshift(PPH.photos.splice(i,1)[0]);PIMG=PPH.photos[0];}
+  updImgBox();});
+{const _va=vfApply;vfApply=function(p){if(PPH&&p){if(PPH.busy)toast('Une photo était encore en envoi : rouvrez l\'article pour la vérifier');p.photos=PPH.photos.slice(0,4);if(!p.photos.length)p.img='';}PPH=null;return _va.apply(this,arguments);};}
+
+/* ---------- Mode et artisan : pas de code-barres ni de prix de gros ---------- */
+{const _dg2=domGate;domGate=function(){_dg2.apply(this,arguments);const app=$('app');if(!app||!S)return;const t=btype();
+  const noScan=['mode','art'].includes(t);
+  if(noScan){app.querySelectorAll('[data-act="scanSellGo"],[data-act="scanSell"],[data-act="scanStock"]').forEach(e=>{e.hidden=true;const g=e.parentElement;if(g&&g.classList.contains('grid2'))g.style.gridTemplateColumns='1fr';});
+    if(t==='mode')app.querySelectorAll('[data-act="restock"]').forEach(e=>e.hidden=true);
+    app.querySelectorAll('h3').forEach(h=>{if(h.textContent.trim().toLowerCase().startsWith('lecteur de code-barres')){h.hidden=true;if(h.nextElementSibling)h.nextElementSibling.hidden=true;}});}
+  if(t!=='tout'&&!feat('gros')){const g=app.querySelector('[data-act="gros"]');const sg=g&&g.closest('.seg');if(sg){sg.hidden=true;const gr=sg.parentElement;if(gr&&gr.classList.contains('grid2'))gr.style.gridTemplateColumns='1fr';}}};}
+
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
   if(b.dataset.xdemo==='1'){demoPick();}
