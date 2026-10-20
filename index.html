@@ -339,6 +339,10 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
 .actgo{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:6px 0}
 .actgo b{display:block;font-size:16px}.actgo small{display:block;color:var(--muted);font-size:13px}.actgo .bte{font-size:26px}
 .actrow.cur .actgo b{color:var(--accent)}
+.acthead{display:flex;align-items:center;gap:6px}.acthead .actgo{flex:1}
+.actdots{border:1px solid var(--line);background:none;color:var(--ink);border-radius:10px;width:40px;height:36px;font-size:20px;line-height:1;cursor:pointer;flex:none}
+.actmenu{display:flex;gap:16px;justify-content:flex-end;padding:2px 0 6px}
+#actDelNom{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:11px;background:var(--card);color:var(--ink);font:inherit}
 .btlist{display:flex;flex-direction:column;gap:8px}
 .btc{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit;cursor:pointer}
 .btc b{display:block;font-size:16px}.btc small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.35}
@@ -2155,7 +2159,7 @@ function txtGate(){const T=BT_TXT[btype()];if(!T)return;const ph=(id,v)=>{const 
    +ACT_PRIX F par mois sur l'abonnement.
    ====================================================================== */
 const ACT_PRIX=2500;
-let ACTS=null,ACT_MAIN=null,ACT_BUSY=false,ACT_NEW=null,ACT_ASK=null;
+let ACTS=null,ACT_MAIN=null,ACT_BUSY=false,ACT_NEW=null,ACT_ASK=null,ACT_MENU=null;
 const actOk=()=>!!(SB&&USER&&!XDEMO);
 async function actRefresh(){if(!actOk())return;try{
   const [a,m]=await Promise.all([SB.from('boutique_activites').select('id,nom,btype,created_at').eq('user_id',USER.id).eq('archive',false).order('created_at'),
@@ -2163,8 +2167,9 @@ async function actRefresh(){if(!actOk())return;try{
   if(!a.error)ACTS=a.data||[];if(!m.error)ACT_MAIN=m.data||{shop_name:'',btype:''};}catch(e){}}
 function actName(){if(!ACT)return (S&&S.shop&&S.shop.name)||'';const a=(ACTS||[]).find(x=>x.id===ACT);return a?a.nom:(S&&S.shop&&S.shop.name)||'';}
 function actRow(id,nom,bt,cur){const k=BTY[bt]?bt:'tout';
-  return '<div class="actrow'+(cur?' cur':'')+'"><button type="button" class="actgo" data-act="actGo" data-id="'+(id||'')+'"><span class="bte">'+BTY[k].e+'</span><span><b>'+esc(nom||'Sans nom')+'</b><small>'+(id?'Activité en plus · +'+F(ACT_PRIX)+' / mois':'Activité principale')+(cur?' · ouverte':'')+'</small></span></button>'+
-   (id?(ACT_ASK===id?'<div class="banner bad" style="margin-top:6px"><span>Supprimer « '+esc(nom)+' » ? Ses ventes et articles ne seront plus visibles et on ne paie plus pour elle.</span><div class="grid2"><button class="btn danger" data-act="actDel" data-id="'+id+'">Oui, supprimer</button><button class="btn line" data-act="actAskDel" data-id="">Non</button></div></div>':'<button type="button" class="back" style="margin:2px 0 0 46px" data-act="actAskDel" data-id="'+id+'">Supprimer</button>'):'')+'</div>';}
+  return '<div class="actrow'+(cur?' cur':'')+'"><div class="acthead"><button type="button" class="actgo" data-act="actGo" data-id="'+(id||'')+'"><span class="bte">'+BTY[k].e+'</span><span><b>'+esc(nom||'Sans nom')+'</b><small>'+(id?'Activité en plus · +'+F(ACT_PRIX)+' / mois':'Activité principale')+(cur?' · ouverte':'')+'</small></span></button>'+(id?'<button type="button" class="actdots" data-act="actMenu" data-id="'+id+'" aria-label="Options">⋯</button>':'')+'</div>'+
+   (id?(ACT_ASK===id?'<div class="banner bad" style="margin-top:6px"><b>Supprimer « '+esc(nom)+' » ?</b><span>Ses ventes, articles et crédits ne seront plus visibles, et vous ne payez plus pour elle. Pour confirmer, écrivez son nom :</span><input id="actDelNom" autocomplete="off" placeholder="'+esc(nom)+'"><div class="grid2"><button class="btn danger" data-act="actDel" data-id="'+id+'">Supprimer</button><button class="btn line" data-act="actAskDel" data-id="">Annuler</button></div></div>'
+      :ACT_MENU===id?'<div class="actmenu"><button type="button" class="back" style="margin:0" data-act="actAskDel" data-id="'+id+'">🗑 Supprimer cette activité…</button><button type="button" class="back" style="margin:0" data-act="actMenu" data-id="">Fermer</button></div>':''):'')+'</div>';}
 function actSheet(){const list=ACTS||[];const n=list.length;
   if(ACT_NEW){openSheet('Nouvelle activité','<div class="card stack"><label class="f">Nom de l\'activité<input id="actNom" value="'+esc(ACT_NEW.nom)+'" placeholder="Ex : Awa Fashion"></label>'+
     '<div class="f" style="gap:8px"><span>Elle vend quoi ?</span>'+btPicker(ACT_NEW.bt,'data-bt-new')+'</div>'+
@@ -2175,7 +2180,7 @@ function actSheet(){const list=ACTS||[];const n=list.length;
    '<div class="card stack">'+actRow('',ACT_MAIN&&ACT_MAIN.shop_name||(!ACT&&S.shop.name)||'Ma boutique',ACT_MAIN&&ACT_MAIN.btype||(!ACT&&S.btype)||'tout',!ACT)+list.map(a=>actRow(a.id,a.nom,a.btype,a.id===ACT)).join('')+'</div>'+
    '<div class="small" style="margin:10px 0">Abonnement : '+esc(PRIX_MOIS)+(n?' + '+n+' × '+F(ACT_PRIX)+' = <b>'+F(num(PRIX_MOIS)+ACT_PRIX*n)+'</b>':'')+' par mois.</div>'+
    (n<5?'<button class="btn" data-act="actNew">+ Ajouter une activité</button>':'<div class="small">5 activités en plus au maximum.</div>')));}
-async function actOpen(){if(!actOk())return;ACT_NEW=null;ACT_ASK=null;actSheet();await actRefresh();if($('sheetRoot').innerHTML)actSheet();}
+async function actOpen(){if(!actOk())return;ACT_NEW=null;ACT_ASK=null;ACT_MENU=null;actSheet();await actRefresh();if($('sheetRoot').innerHTML)actSheet();}
 async function actSave(){if(!isDirty())return true;await push();return !isDirty();}
 async function actGo(id,quiet){if(ACT_BUSY)return;id=id||'';if(id===ACT){closeSheet();return;}ACT_BUSY=true;
   try{if(!(await actSave())){toast('Pas encore sauvegardé en ligne : vérifiez internet, puis réessayez');return;}
@@ -2207,8 +2212,9 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act^="act
   else if(a==='actNew'){if(!w())return;ACT_NEW={nom:'',bt:''};actSheet();}
   else if(a==='actBack'){ACT_NEW=null;actSheet();}
   else if(a==='actCreate')actCreate();
-  else if(a==='actAskDel'){ACT_ASK=id||null;actSheet();}
-  else if(a==='actDel')actDel(id);});
+  else if(a==='actMenu'){ACT_MENU=id||null;ACT_ASK=null;actSheet();}
+  else if(a==='actAskDel'){ACT_ASK=id||null;ACT_MENU=null;actSheet();}
+  else if(a==='actDel'){const a2=(ACTS||[]).find(x=>x.id===id);const typed=($('actDelNom')?$('actDelNom').value:'').trim().toLowerCase();if(!a2||typed!==String(a2.nom||'').trim().toLowerCase())return toast('Écrivez exactement le nom de l\'activité pour la supprimer');actDel(id);}});
 // Réglages : carte « Mes activités »
 {const _bc=btCard;btCard=function(){const x=_bc.apply(this,arguments);if(!actOk())return x;const n=(ACTS||[]).length;
   return '<h3>Mes activités</h3><div class="card stack"><div class="small">Vous avez une autre activité (ex. une boutique et un magasin de vêtements) ? Ajoutez-la avec le même numéro : chacune a ses articles, ventes et crédits. <b>+'+F(ACT_PRIX)+' par mois</b> par activité en plus.</div>'+
