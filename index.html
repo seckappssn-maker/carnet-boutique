@@ -1856,8 +1856,8 @@ let VF=null;
 const VF_T={taille:[['Lettres',['XS','S','M','L','XL','XXL','3XL']],['Pointures',['36','37','38','39','40','41','42','43','44','45']],['Enfants',['2 ans','4 ans','6 ans','8 ans','10 ans','12 ans']],['Sans taille',['Unique']]],
   qualite:[['Qualités',['Getzner','Riche','Super riche','Brodé','Wax','Simple']],['Une seule qualité',['Unique']]]};
 const VF_C=['Noir','Blanc','Rouge','Bleu','Vert','Jaune','Rose','Beige','Marron','Gris','Doré','Bordeaux','Orange','Violet'];
-function vfInit(p,pre){if(pre&&VF&&VF.pid===(p.id||''))return;
-  VF={pid:p.id||'',on:hasVar(p),vk:p.vk||'taille',t:hasVar(p)?uniqA(p.var.map(v=>v.t)):[],c:hasVar(p)?uniqA(p.var.map(v=>v.c)).filter(Boolean):[],q:{},more:[],moreC:[],pkLen:p.vk==='qualite'&&p.pack>0?String(p.pack):'',pkPrice:p.vk==='qualite'&&p.pricePk>0?String(p.pricePk):''};
+function vfInit(p,pre){if(pre&&VF&&VF.pid===(p.id||''))return;const nouv=!p.id&&!hasVar(p)&&btype()==='mode';
+  VF={pid:p.id||'',on:hasVar(p)||nouv,vk:p.vk||'taille',t:hasVar(p)?uniqA(p.var.map(v=>v.t)):[],c:hasVar(p)?uniqA(p.var.map(v=>v.c)).filter(Boolean):[],q:{},more:[],moreC:[],pkLen:p.vk==='qualite'&&p.pack>0?String(p.pack):'',pkPrice:p.vk==='qualite'&&p.pricePk>0?String(p.pricePk):''};
   if(hasVar(p))p.var.forEach(v=>{VF.q[v.t+'|'+v.c]=v.q;});}
 function vfHTML(p){return varOn()||hasVar(p)?'<div id="vfBox" class="vfbox"></div>':'';}
 const vfOn=()=>!!(VF&&VF.on&&VF.t.length);
@@ -2054,7 +2054,7 @@ const BT_ORDER=['alim','quinc','mode','cosm','art','tout'];
 const btype=()=>(S&&BTY[S.btype])?S.btype:'tout';
 const isArt=()=>btype()==='art';
 const varOn=()=>btype()==='mode'||(btype()==='tout'&&!!(S&&S.fash&&S.fash.on));
-const FEAT={carton:['alim','quinc','cosm','tout'],gros:['alim','quinc','cosm','tout'],exp:['alim','cosm','tout'],code:['alim','quinc','mode','cosm','tout'],stock:['alim','quinc','mode','cosm','tout'],unit:['alim','quinc','mode','tout']};
+const FEAT={carton:['alim','quinc','cosm','tout'],gros:['alim','quinc','cosm','tout'],exp:['alim','cosm','tout'],code:['alim','quinc','cosm','tout'],stock:['alim','quinc','mode','cosm','tout'],unit:['alim','quinc','mode','tout']};
 const feat=k=>FEAT[k].includes(btype());
 function setType(t){if(!BTY[t])return;S.btype=t;const F2=fashDef();if(t!=='tout')F2.on=['mode','cosm','art'].includes(t);if(t==='art'){webDef().stock=false;}save();}
 function btPicker(cur,attr){return '<div class="btlist">'+BT_ORDER.map(k=>'<button type="button" class="btc" '+attr+'="'+k+'" aria-pressed="'+(cur===k)+'"><span class="bte">'+BTY[k].e+'</span><span><b>'+BTY[k].n+'</b><small>'+BTY[k].d+'</small></span></button>').join('')+'</div>';}
@@ -2106,6 +2106,20 @@ function domGate(){if(!S||btype()==='tout')return;const app=$('app');if(!app)ret
   if(!feat('exp'))hideTxt('.banner','Dates de péremption');
   if(isArt()){app.querySelectorAll('[data-act="restock"]').forEach(e=>e.hidden=true);hideTxt('.stat','À racheter');
     const tb=app.querySelector('nav.tabs [data-tab="stock"]');if(tb&&tb.lastChild&&tb.lastChild.nodeType===3)tb.lastChild.textContent='Articles';}}
+
+const BT_TXT={
+  alim:{nom:'Ex : Savon Madar',prix:'Ex : 300',qte:'Ex : 24',achat:'Ex : 250',vide:'Ajoutez vos articles (riz, huile, sucre, savon…) avec le prix et la quantité. Scannez le code-barres s\'il en a un.'},
+  quinc:{nom:'Ex : Ciment 50 kg',prix:'Ex : 4500',qte:'Ex : 100',achat:'Ex : 4100',vide:'Ajoutez vos articles (ciment, fer, peinture, tuyaux…) avec le prix et la quantité.'},
+  mode:{nom:'Ex : Robe longue satin',prix:'Ex : 15000',qte:'Ex : 5',achat:'Ex : 9000',vide:'Ajoutez vos articles (robes, ensembles, chaussures, sacs, tissus…) avec une photo, le prix, les tailles et les couleurs.'},
+  cosm:{nom:'Ex : Parfum 100 ml',prix:'Ex : 10000',qte:'Ex : 12',achat:'Ex : 6500',vide:'Ajoutez vos articles (parfums, crèmes, mèches, maquillage…) avec le prix, la quantité et la date de péremption.'},
+  art:{nom:'Ex : Armoire 3 portes',prix:'Ex : 250000',qte:'',achat:'',vide:''},
+  tout:null};
+function txtGate(){const T=BT_TXT[btype()];if(!T)return;const ph=(id,v)=>{const e=$(id);if(e&&v)e.placeholder=v;};
+  ph('prName',T.nom);ph('prPrice',T.prix);ph('prQty',T.qte);ph('prCost',T.achat);}
+{const _pg=prodGate;prodGate=function(){_pg.apply(this,arguments);try{txtGate();}catch(e){}};}
+{const _dg=domGate;domGate=function(){_dg.apply(this,arguments);const app=$('app');if(!app||!S)return;const t=btype();
+  if(['mode','art','cosm'].includes(t))app.querySelectorAll('[data-act="addAmt"]').forEach(e=>e.hidden=true);
+  const T=BT_TXT[t];if(T&&T.vide)app.querySelectorAll('.list .empty').forEach(e=>{if(e.textContent.startsWith('Ajoutez vos articles (riz'))e.textContent=T.vide;});};}
 {const _r3=render;render=function(){const x=_r3.apply(this,arguments);try{domGate();}catch(e){}return x;};}
 // Artisan : la page « Stock » devient « Mes réalisations » (pas de quantités)
 {const _vs=vStock;vStock=function(){if(!isArt())return _vs.apply(this,arguments);const q=stockQ.trim().toLowerCase();
