@@ -135,7 +135,7 @@ label.f input,label.f textarea{border:1.5px solid var(--line);background:var(--b
 .thumbs{display:flex;gap:8px}
 .thumbs button{width:62px;height:62px;border-radius:12px;overflow:hidden;border:2px solid transparent;padding:0;background:var(--yellow-soft)}
 .thumbs button[aria-pressed="true"]{border-color:#0B6E5B}
-.thumbs svg{width:100%;height:100%;display:block}
+.thumbs svg,.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .msg{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:calc(var(--fs)*.9)}
 .note{color:var(--muted);font-size:calc(var(--fs)*.85)}
 .gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -319,7 +319,8 @@ function all(){head();cats();list();bar();$('lang').textContent=LANG==='fr'?'Wol
 /* ---------- Feuilles ---------- */
 function open(html){$('sheetRoot').innerHTML='<div class="shade" id="shade"><div class="sheet" role="dialog" aria-modal="true">'+html+'</div></div>';}
 function close(){$('sheetRoot').innerHTML='';}
-function see(id,i){const a=art(id);i=i||0;const out=isOut(a);
+let SEEI=0;
+function see(id,i){const a=art(id);i=i||0;SEEI=i;const out=isOut(a);
   open('<div class="sh"><h2>'+esc(a.nom)+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
    '<div class="big'+(ART()?' tall':'')+'">'+pic(a,i)+'</div>'+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
    (a.desc?'<p>'+esc(a.desc)+'</p>':'')+
@@ -330,9 +331,9 @@ function varBox(a){if(!SV||SV.id!==a.id){SV={id:a.id,t:null,c:null};const ts=[..
   const left=(t,c)=>vq(a,t,c)-(cart[ck(a.id,t,c)]||0);const leftT=t=>cs.reduce((s,c)=>s+Math.max(0,left(t,c)),0);
   const ok=SV.t!=null&&SV.c!=null&&left(SV.t,SV.c)>0;
   return (ts.length>1||ts[0]!=='Unique'?'<div class="ftitle">'+(a.vk==='qualite'?'Qualité':'Taille')+'</div><div class="vch">'+ts.map(x=>'<button type="button" class="vc" data-st="'+esc(x)+'" aria-pressed="'+(SV.t===x)+'"'+(leftT(x)<=0?' disabled':'')+'>'+esc(x)+'</button>').join('')+'</div>':'')+
-   (hasC?'<div class="ftitle">Couleur</div><div class="vch">'+cs.map(c=>'<button type="button" class="vc" data-sc="'+esc(c)+'" aria-pressed="'+(SV.c===c)+'"'+(SV.t==null||left(SV.t,c)<=0?' disabled':'')+'>'+cdot(c)+esc(c||'—')+'</button>').join('')+'</div>':'')+
+   (hasC?'<div class="ftitle">Couleur</div><div class="vch">'+cs.map(c=>'<button type="button" class="vc" data-sc="'+esc(c)+'" aria-pressed="'+(SV.c===c)+'"'+(SV.t!=null&&left(SV.t,c)<=0?' disabled':'')+'>'+cdot(c)+esc(c||'—')+'</button>').join('')+'</div>':'')+
    (a.unite==='m'?'<p class="note">Prix pour 1 mètre. Dites le nombre de mètres dans la note si vous en voulez plus.</p>':'')+
-   '<button class="send" type="button" data-pv="1"'+(ok?'':' disabled')+'>'+(ok?t('Ajouter')+' · '+F(a.prix):'Choisissez '+(ts.length>1?(a.vk==='qualite'?'la qualité':'la taille'):'')+(ts.length>1&&hasC?' et ':'')+(hasC?'la couleur':''))+'</button>';}
+   '<button class="send" type="button" data-pv="1"'+(ok?'':' disabled')+'>'+(ok?t('Ajouter')+' · '+F(a.prix):(()=>{const mt=SV.t==null,mc=SV.c==null;if(!mt&&!mc)return t('Épuisé');return 'Choisissez '+[mt?(a.vk==='qualite'?'la qualité':'la taille'):'',mc?'la couleur':''].filter(Boolean).join(' et ');})())+'</button>';}
 function showCart(err){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
   if(!ls.length){open('<div class="sh"><h2>'+t('Ma commande')+'</h2><button class="x" type="button" data-close>×</button></div><p class="empty">'+t('Votre panier est vide.')+'</p>');return;}
   const opts=[];if(D.livraison)opts.push(['livraison',t('Livraison')]);if(D.retrait)opts.push(['retrait','Je passe récupérer']);if(!opts.find(o=>o[0]===mode))mode=opts[0][0];
@@ -384,8 +385,8 @@ document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}
   const b=e.target.closest('button,[data-close]');if(!b)return;
   if(b.dataset.cat){CAT=b.dataset.cat;cats();list();return;}
   if(b.dataset.see){if(!SV||SV.id!==b.dataset.see)SV=null;see(b.dataset.see,+(b.dataset.i||0));return;}
-  if(b.dataset.st!=null&&SV){SV.t=b.dataset.st;const a=art(SV.id);const okc=[...new Set(a.var.map(v=>v.c))].filter(c=>vq(a,SV.t,c)-(cart[ck(a.id,SV.t,c)]||0)>0);if(SV.c!=null&&!okc.includes(SV.c))SV.c=null;if(SV.c==null&&okc.length===1)SV.c=okc[0];see(SV.id);return;}
-  if(b.dataset.sc!=null&&SV){SV.c=b.dataset.sc;see(SV.id);return;}
+  if(b.dataset.st!=null&&SV){SV.t=b.dataset.st;const a=art(SV.id);const okc=[...new Set(a.var.map(v=>v.c))].filter(c=>vq(a,SV.t,c)-(cart[ck(a.id,SV.t,c)]||0)>0);if(SV.c!=null&&!okc.includes(SV.c))SV.c=null;if(SV.c==null&&okc.length===1)SV.c=okc[0];see(SV.id,SEEI);return;}
+  if(b.dataset.sc!=null&&SV){SV.c=b.dataset.sc;see(SV.id,SEEI);return;}
   if(b.dataset.pv&&SV){const a=art(SV.id),k=ck(a.id,SV.t,SV.c);if(vq(a,SV.t,SV.c)-(cart[k]||0)<=0)return;cart[k]=(cart[k]||0)+1;SV=null;list();bar();close();return;}
   if(b.dataset.zone!=null){keep();ZONE=b.dataset.zone;showCart();return;}
   if(b.dataset.p){keep();const k=b.dataset.p,a=art(k);if(!a||isOut(a))return;cart[k]=Math.min((cart[k]||0)+1,maxK(k));list();bar();if(b.hasAttribute('data-in'))showCart();else if(b.hasAttribute('data-close'))close();return;}
