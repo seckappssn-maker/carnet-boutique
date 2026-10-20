@@ -26,7 +26,7 @@
 </head>
 <body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Layout: carnet de caisse mobile — en-tête collant, contenu en colonne, 5 onglets en bas, fenêtres qui montent du bas */
 :root{
@@ -333,8 +333,8 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
 <div id="app"></div>
 <div id="sheetRoot"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="var s=document.createElement('script');s.src='https://unpkg.com/@supabase/supabase-js@2';document.head.appendChild(s)"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" onerror="var s=document.createElement('script');s.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';document.head.appendChild(s)"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="var s=document.createElement('script');s.src='https://unpkg.com/@supabase/supabase-js@2';document.head.appendChild(s)"></script>
+
 <script>
 // ===== Langue : français par défaut, bouton Wolof =====
 try{if(localStorage.getItem('carnetBoutique.big')==='1')document.documentElement.classList.add('big');}catch(e){}
@@ -564,7 +564,7 @@ async function cloudCheck(){if(!SB||!USER)return 'skip';
   setDirty(false);setSync('ok');return 'same';}
 async function afterLogin(){try{setActLocal(localStorage.getItem(actKey())||'');}catch(e){}const old=load();S=old&&old.uid&&old.uid!==USER.id?null:old;if(!S){try{localStorage.removeItem(KEY);}catch(e){}}
   try{await cloudCheck();}catch(e){setSync('err');}try{await fetchLic();}catch(e){}tab='home';render();}
-async function boot(){const t0=Date.now();while(!window.supabase&&Date.now()-t0<7000)await new Promise(r=>setTimeout(r,150));
+async function boot(){const t0=Date.now();while(!window.supabase&&Date.now()-t0<25000)await new Promise(r=>setTimeout(r,150));
   if(!window.supabase){BOOTING=false;S=load();render();return;}
   SB=window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'carnetBoutique.auth'}});
   try{const {data}=await SB.auth.getSession();USER=data&&data.session?data.session.user:null;}catch(e){USER=null;}if(!USER){try{const o=JSON.parse(localStorage.getItem('carnetBoutique.auth')||'null');if(o&&o.user&&o.user.id)USER=o.user;}catch(e){}}
@@ -2183,6 +2183,16 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act^="act
    (n?'<div class="small">Vous avez '+(n+1)+' activités. Abonnement : <b>'+F(num(PRIX_MOIS)+ACT_PRIX*n)+' par mois</b>.</div>':'')+'<button class="btn line" data-act="actOpen">🏪 Mes activités / en ajouter une</button></div>'+x;};}
 // au démarrage : la liste des activités (pour le nom en haut et les Réglages)
 setTimeout(()=>{actRefresh().then(()=>{if(S&&(tab==='set'))render();});},3000);
+
+// Lecteur de code-barres : chargé seulement quand on en a besoin (l'app s'ouvre plus vite)
+let QRP=null;
+function loadQR(){if(HQ())return Promise.resolve();if(QRP)return QRP;
+  QRP=new Promise(r=>{const add=(u,next)=>{const sc=document.createElement('script');sc.src=u;sc.onload=()=>r();sc.onerror=next;document.head.appendChild(sc);};
+    add('https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js',()=>add('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',()=>{QRP=null;r();}));});
+  return QRP;}
+{const _os=openScanner;openScanner=function(){const a=arguments,me=this;if(HQ())return _os.apply(me,a);openSheet(a[0],'<div class="empty">Ouverture de la caméra…</div>');loadQR().then(()=>_os.apply(me,a));};}
+{const _si=scanImage;scanImage=async function(){await loadQR();return _si.apply(this,arguments);};}
+setTimeout(()=>{try{(window.requestIdleCallback||setTimeout)(()=>loadQR());}catch(e){}},6000);
 
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
