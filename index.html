@@ -2029,7 +2029,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if
   else if(a==='saleSwap1'){const s=S.sales.find(x=>x.id===id);if(s)swapLine(s.lines,+el.dataset.i,()=>showDoc('s',s));}
   else if(a==='addPk'){readDraft();const p=prod(id);if(p&&addLine(p,{pk:p.pack}))toast('+1 '+pkName(p)+' · '+p.name);draft.q='';render();}
   // Réglages : mode boutique de mode et zones
-  else if(a==='fzOn'){if(!w())return;fzRead();const on=el.dataset.v==='1';fashDef().on=on;save();render();toast(on?'👗 Mode boutique activé : ouvrez un article dans Stock pour les tailles / couleurs':'Mode boutique désactivé');}
+  else if(a==='fzOn'){if(!w())return;fzRead();const on=el.dataset.v==='1';fashDef().on=on;save();render();toast(on?'👗 Vêtements et tissus activé : ouvrez un article dans Stock pour les tailles / couleurs':'Vêtements et tissus désactivé');}
   else if(a==='fzAdd'){fzRead();fashDef().zones.push({n:'',p:0});render();setTimeout(()=>{const i=document.querySelectorAll('[data-fzn]');if(i.length)i[i.length-1].focus();},30);}
   else if(a==='fzDel'){fzRead();fashDef().zones.splice(+el.dataset.i,1);save();render();}
   else if(a==='fzSave'){if(!w())return;fzRead();S.fash.zones=S.fash.zones.filter(z=>z.n);save();render();toast('Zones enregistrées');}});
@@ -2039,7 +2039,7 @@ function fashCard(){const on=fashOn();const Z=on?fashDef().zones:[];
   if(btype()!=='tout'){if(!on)return '';return '<h3>Zones de livraison</h3><div class="card stack"><div class="small">Le prix se met tout seul dans les commandes. Il s\'affiche aussi sur votre boutique en ligne.</div>'+
      Z.map((z,i)=>'<div class="grid2" style="grid-template-columns:1fr 110px 44px;align-items:end"><label class="f">Zone<input data-fzn="'+i+'" value="'+esc(z.n)+'" placeholder="Ex : Dakar"></label><label class="f">Prix (F)<input data-fzp="'+i+'" inputmode="numeric" value="'+esc(z.p)+'"></label><button type="button" class="btn line sm" data-act="fzDel" data-i="'+i+'" aria-label="Enlever">×</button></div>').join('')+
      '<div class="grid2"><button type="button" class="btn line" data-act="fzAdd">+ Zone</button><button type="button" class="btn" data-act="fzSave">Enregistrer</button></div></div>';}
-  return '<h3>Boutique de mode et tissus</h3><div class="card stack"><div class="small">Pour les boutiques de vêtements, chaussures, sacs, tissus (bazin Getzner, brodé, wax…) : tailles ou qualités, couleurs, commandes à livrer avec zones, acompte et échange de taille.</div>'+
+  return '<h3>Vêtements, chaussures et tissus</h3><div class="card stack"><div class="small">Pour les boutiques de vêtements, chaussures, sacs, tissus (bazin Getzner, brodé, wax…) : tailles ou qualités, couleurs, commandes à livrer avec zones, acompte et échange de taille.</div>'+
    '<div class="seg"><button class="segb" type="button" data-act="fzOn" data-v="0" aria-pressed="'+!on+'">Non</button><button class="segb" type="button" data-act="fzOn" data-v="1" aria-pressed="'+on+'">👗 Oui, activer</button></div>'+
    (on?'<b>Zones de livraison</b><div class="small">Le prix se met tout seul dans les commandes. Il s\'affiche aussi sur votre boutique en ligne.</div>'+
      Z.map((z,i)=>'<div class="grid2" style="grid-template-columns:1fr 110px 44px;align-items:end"><label class="f">Zone<input data-fzn="'+i+'" value="'+esc(z.n)+'" placeholder="Ex : Dakar"></label><label class="f">Prix (F)<input data-fzp="'+i+'" inputmode="numeric" value="'+esc(z.p)+'"></label><button type="button" class="btn line sm" data-act="fzDel" data-i="'+i+'" aria-label="Enlever">×</button></div>').join('')+
@@ -2066,7 +2066,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]
 const BTY={
   alim:{e:'🛒',n:'Alimentation / boutique de quartier',d:'Riz, huile, sucre, savon… Carton, prix gros, péremption, code-barres.'},
   quinc:{e:'🔩',n:'Quincaillerie / matériaux',d:'Ciment, fer, peinture… Au sac, au mètre, au kg, devis, fournisseurs.'},
-  mode:{e:'👗',n:'Mode, chaussures, tissus',d:'Tailles, couleurs, tissus au mètre, commandes à livrer.'},
+  mode:{e:'👗',n:'Vêtements, chaussures, tissus',d:'Tailles, couleurs, tissus au mètre, commandes à livrer.'},
   cosm:{e:'💄',n:'Cosmétiques / parfums',d:'Péremption, boutique en ligne, commandes à livrer.'},
   phar:{e:'💊',n:'Pharmacie / parapharmacie',d:'Médicaments et parapharmacie : péremption, code-barres, alerte stock bas, commandes à livrer.'},
   art:{e:'🛠',n:'Artisan / sur commande',d:'Menuisier, décorateur… Vos réalisations en vitrine, devis, commandes avec acompte. Pas de stock.'},
@@ -2082,7 +2082,7 @@ function btPicker(cur,attr){return '<div class="btlist">'+BT_ORDER.map(k=>'<butt
 let BT_OPEN=false;
 function btCard(){const k=btype();
   if(!BT_OPEN)return '<h3>Type de boutique</h3><div class="card stack"><div class="btc" style="cursor:default" aria-pressed="true"><span class="bte">'+BTY[k].e+'</span><span><b>'+BTY[k].n+'</b><small>'+BTY[k].d+'</small></span></div><button type="button" class="btn line" data-act="btOpen">Changer de type</button></div>';
-  return '<h3>Type de boutique</h3><div class="card stack"><div class="small"><b>Attention :</b> chaque type montre seulement ses fonctions (par exemple, le scanner n\'existe pas en Mode, les tailles n\'existent pas en Alimentation). Vos ventes, articles et crédits restent toujours.</div>'+btPicker(k,'data-bt-set')+'<button type="button" class="btn line" data-act="btClose">Annuler, ne rien changer</button></div>';}
+  return '<h3>Type de boutique</h3><div class="card stack"><div class="small"><b>Attention :</b> chaque type montre seulement ses fonctions (par exemple, le scanner n\'existe pas en Vêtements, les tailles n\'existent pas en Alimentation). Vos ventes, articles et crédits restent toujours.</div>'+btPicker(k,'data-bt-set')+'<button type="button" class="btn line" data-act="btClose">Annuler, ne rien changer</button></div>';}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act="btOpen"],[data-act="btClose"]');if(!b||!S)return;BT_OPEN=b.dataset.act==='btOpen';render();});
 // Réglages : changer le type
 document.addEventListener('click',e=>{const b=e.target.closest('[data-bt-set]');if(!b||!S)return;if(!w())return;const t=b.dataset.btSet;if(t===btype()){BT_OPEN=false;render();return;}BT_OPEN=false;
