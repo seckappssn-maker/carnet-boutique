@@ -199,6 +199,43 @@ const EX={nom:'Boutique Awa (exemple)',photos:['data:image/svg+xml;charset=utf-8
   {id:'a8',nom:'Crème karité',cat:'Parfums & beauté',prix:3500,desc:'Pot de 250 g.',stock:20,img:[drawing('creme','#FFF3E6','#F2C6A0','#0B6E5B')]}
 ]};
 
+
+/* exemples selon le type de boutique (page ouverte depuis « Voir comment ça marche ») */
+const EXT=(()=>{try{return (new URLSearchParams(location.search).get('t')||'').replace(/[^a-z]/g,'');}catch(e){return '';}})();
+const EXZ=[{n:'Dakar',p:1500},{n:'Banlieue',p:2000},{n:'Régions',p:3500}];
+const EXS={
+ mode:{nom:'Awa Fashion (exemple)',texte:'Robes, ensembles, chaussures, sacs et bazin. Livraison partout à Dakar.',articles:[
+  {id:'m1',nom:'Robe longue satin',cat:'Robes',prix:15000,old:18000,desc:'Satin léger, coupe longue.',stock:6,vk:'',img:[drawing('robe','#EFE3F7','#7A3FB0','#F5B700')],var:[{t:'S',c:'Noir',q:2},{t:'M',c:'Noir',q:1},{t:'M',c:'Rouge',q:2},{t:'L',c:'Rouge',q:1},{t:'L',c:'Noir',q:0}],tailles:'Tailles : S, M, L'},
+  {id:'m2',nom:'Robe wax',cat:'Robes',prix:12000,desc:'Wax 100 % coton.',stock:4,img:[drawing('robe','#FDEBD3','#D9480F','#0B6E5B')],var:[{t:'S',c:'Rouge',q:2},{t:'M',c:'Bleu',q:2}],tailles:'Tailles : S, M',badge:'new'},
+  {id:'m3',nom:'Escarpins',cat:'Chaussures & sacs',prix:18000,desc:'Talon 8 cm.',stock:5,img:[drawing('chaussure','#F1F1F1','#1C2321','#E7E2D8')],var:[{t:'37',c:'Noir',q:1},{t:'38',c:'Noir',q:2},{t:'39',c:'Beige',q:2}],tailles:'Tailles : 37, 38, 39'},
+  {id:'m4',nom:'Sac à main cuir',cat:'Chaussures & sacs',prix:22000,desc:'Cuir, 2 couleurs.',stock:4,img:[drawing('sac','#F7E6D5','#8A4B2A','#C9A227')],var:[{t:'Unique',c:'Marron',q:3},{t:'Unique',c:'Noir',q:1}]},
+  {id:'m5',nom:'Bazin Getzner',cat:'Tissus',prix:3500,desc:'Prix pour 1 mètre.',stock:40,unite:'m',vk:'qualite',img:[drawing('tissu','#E6F4EF','#0B6E5B','#FCEE45')],var:[{t:'Getzner',c:'Blanc',q:30},{t:'Getzner',c:'Bleu',q:10}]}]},
+ art:{nom:'Menuiserie Diallo (exemple)',type:'art',texte:'Meubles et décoration sur mesure. Demandez votre devis gratuit.',articles:[
+  {id:'a1',nom:'Armoire 3 portes',cat:'Meubles',prix:250000,desc:'Bois massif, sur mesure.',stock:null,img:[]},
+  {id:'a2',nom:'Lit 2 places avec tête de lit',cat:'Meubles',prix:180000,desc:'Couleur au choix.',stock:null,img:[]},
+  {id:'a3',nom:'Faux plafond (le m²)',cat:'Décoration',prix:9000,desc:'Pose comprise.',stock:null,img:[]},
+  {id:'a4',nom:'Rideaux salon',cat:'Décoration',prix:45000,desc:'Tissu et pose.',stock:null,img:[drawing('tissu','#F3E8D8','#8A5A1F','#F5B700')]}]},
+ phar:{nom:'Pharmacie du Marché (exemple)',texte:'Parapharmacie et produits de santé. Livraison à Dakar.',articles:[
+  {id:'p1',nom:'Vitamine C 1000 mg',cat:'Vitamines',prix:2500,desc:'Boîte de 20 comprimés.',stock:15,img:[]},
+  {id:'p2',nom:'Gel hydroalcoolique 100 ml',cat:'Hygiène',prix:1000,stock:30,img:[]},
+  {id:'p3',nom:'Crème hydratante',cat:'Soins',prix:4000,stock:6,img:[drawing('creme','#E3EEFB','#1565C0','#F5B700')]},
+  {id:'p4',nom:'Thermomètre digital',cat:'Matériel',prix:3500,stock:8,img:[]}]},
+ cosm:{nom:'Beauté Divine (exemple)',texte:'Parfums, crèmes, mèches et maquillage. Livraison partout à Dakar.',articles:[
+  {id:'c1',nom:'Parfum oriental 100 ml',cat:'Parfums',prix:10000,old:12000,desc:'Boisé et oriental.',stock:12,img:[drawing('parfum','#F8E3EC','#B03A6E','#C9A227')]},
+  {id:'c2',nom:'Crème karité 250 g',cat:'Soins',prix:3500,stock:20,img:[drawing('creme','#FFF3E6','#F2C6A0','#B03A6E')]},
+  {id:'c3',nom:'Mèches brésiliennes',cat:'Cheveux',prix:15000,stock:6,img:[]}]},
+ quinc:{nom:'Quincaillerie Touba (exemple)',texte:'Ciment, fer, peinture, plomberie. Livraison sur chantier.',articles:[
+  {id:'q1',nom:'Ciment 50 kg',cat:'Construction',prix:4500,stock:120,unite:'sac',img:[]},
+  {id:'q2',nom:'Fer de 10',cat:'Construction',prix:3800,stock:200,unite:'barre',img:[]},
+  {id:'q3',nom:'Peinture blanche 20 L',cat:'Peinture',prix:23000,stock:10,img:[]},
+  {id:'q4',nom:'Tuyau PVC 100',cat:'Plomberie',prix:4500,stock:40,unite:'barre',img:[]}]},
+ alim:{nom:'Boutique Touba (exemple)',texte:'Riz, huile, sucre, lait… Livraison dans le quartier.',articles:[
+  {id:'l1',nom:'Riz parfumé 25 kg',cat:'Riz & céréales',prix:14000,stock:40,unite:'sac',img:[]},
+  {id:'l2',nom:'Huile 1 L',cat:'Épicerie',prix:1300,stock:24,img:[]},
+  {id:'l3',nom:'Sucre 1 kg',cat:'Épicerie',prix:750,stock:30,img:[]},
+  {id:'l4',nom:'Lait en poudre 400 g',cat:'Épicerie',prix:2250,stock:12,img:[]}]}};
+function exPour(t){const e=EXS[t];if(!e)return EX;return Object.assign({},EX,{photos:EX.photos,zones:EXZ},e);}
+
 /* ---------- Langue ---------- */
 const WO={'Ma commande':'Sama komand','Ajouter':'Yokk','Épuisé':'Jeex na','Livraison':'Yóbbal','Votre nom':'Sa tur','Votre téléphone':'Sa telefon',
  'Adresse ou repère':'Adrees walla màndarga','Total':'Lépp','Envoyer ma commande sur WhatsApp':'Yónnee sama komand ci WhatsApp','Fermer':'Tëj',
@@ -368,7 +405,7 @@ function closed(title,txt,retry){document.querySelector('.bar').hidden=true;docu
   $('list').innerHTML=retry?'<p class="empty"><button class="add" type="button" id="retry" style="padding:10px 22px">'+t('Réessayer')+'</button></p>':'';
   const r=$('retry');if(r)r.onclick=()=>location.reload();}
 async function boot(){
-  if(!CODE||CODE==='DEMO'){D=EX;DEMO=true;$('demo').hidden=false;all();return;}
+  if(!CODE||CODE==='DEMO'){D=exPour(EXT);DEMO=true;$('demo').hidden=false;all();return;}
   $('nom').textContent='Chargement…';
   try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),15000);
     const r=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_page_public',{method:'POST',signal:ac.signal,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_code:CODE})});

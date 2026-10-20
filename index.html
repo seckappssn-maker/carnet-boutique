@@ -2344,6 +2344,10 @@ function docA4(kind,s){const sh=S.shop||{},c=s.clientId?client(s.clientId):null,
   const d=document.createElement('div');d.innerHTML='<button class="btn" data-act="docA4" data-k="'+kind+'" data-id="'+s.id+'">📄 '+(kind==='q'?'Devis':'Facture')+' A4 (PDF, avec tableau)</button>';box.insertBefore(d.firstChild,box.children[1]||null);};}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act="docA4"]');if(!b||!S)return;const k=b.dataset.k;const s=(k==='q'?S.quotes:S.sales).find(x=>x.id===b.dataset.id);if(s)printHTML(docA4(k,s));});
 
+// Exemple sans compte : montrer la page des clients (exemple adapté au type)
+{const _wl=webLinkCard;webLinkCard=function(full){if(!XDEMO)return _wl.apply(this,arguments);
+  return '<div class="card stack"><div class="small">Dans la vraie boutique, vous avez votre propre lien à mettre sur votre statut WhatsApp, TikTok, Facebook. Voici à quoi ressemble la page que voient vos clients :</div><a class="btn" target="_blank" rel="noopener" href="shop.html?c=DEMO&t='+btype()+'">👀 Voir la page de mes clients (exemple)</a></div>';};}
+
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
   if(b.dataset.xdemo==='1'){demoPick();}
