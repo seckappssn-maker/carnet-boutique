@@ -1885,7 +1885,7 @@ function vfCols(){return VF.c.length?VF.c:[''];}
 function vfTotal(){if(!vfOn())return 0;let s=0;VF.t.forEach(t=>vfCols().forEach(c=>{s+=num(VF.q[t+'|'+c]||0);}));return q2(s);}
 function vfRead(){if(!VF)return;document.querySelectorAll('[data-vq]').forEach(i=>{VF.q[i.dataset.vq]=i.value;});const a=$('vfPkLen'),b=$('vfPkPrice');if(a)VF.pkLen=a.value;if(b)VF.pkPrice=b.value;}
 function vfPaint(){const box=$('vfBox');if(!box||!VF)return;const K=VF.vk==='qualite';const qi=$('prQty');
-  if(qi){qi.disabled=vfOn();if(vfOn())qi.value=String(vfTotal());}
+  if(qi){qi.disabled=false;qi.readOnly=vfOn();if(vfOn())qi.value=String(vfTotal());const lb=qi.closest('label');if(lb&&lb.firstChild&&lb.firstChild.nodeType===3){if(!lb.dataset.lab0)lb.dataset.lab0=lb.firstChild.textContent;lb.firstChild.textContent=vfOn()?'Total (toutes les tailles) ↓':lb.dataset.lab0;}}
   if(!VF.on){box.innerHTML='<div class="f" style="gap:6px"><span>Tailles ou couleurs ?</span><div class="seg"><button class="segb" type="button" data-vf="off" aria-pressed="true">Non</button><button class="segb" type="button" data-vf="on" aria-pressed="false">Oui, ajouter</button></div><div class="small">Pour les vêtements, chaussures, sacs, tissus… : le stock de chaque taille (ou qualité) et couleur.</div></div>';return;}
   const allT=uniqA([...VF_T[VF.vk].flatMap(g=>g[1]),...VF.more,...VF.t]),allC=uniqA([...VF_C,...VF.moreC,...VF.c]);
   const unit=(qi&&$('prUnit'))?$('prUnit').value:'pièce';const cols=vfCols();
@@ -1895,7 +1895,7 @@ function vfPaint(){const box=$('vfBox');if(!box||!VF)return;const K=VF.vk==='qua
    VF_T[VF.vk].map(g=>'<div class="vpchips">'+g[1].map(t=>'<button type="button" class="vpc" data-vft="'+esc(t)+'" aria-pressed="'+VF.t.includes(t)+'">'+esc(t)+'</button>').join('')+'</div>').join('')+
    '<div class="vpchips">'+allT.filter(t=>!VF_T[VF.vk].some(g=>g[1].includes(t))).map(t=>'<button type="button" class="vpc" data-vft="'+esc(t)+'" aria-pressed="'+VF.t.includes(t)+'">'+esc(t)+'</button>').join('')+'<button type="button" class="vpc" data-vfadd="t">+ Autre</button></div>'+
    '<div class="small"><b>Couleurs</b> (aucune = sans couleur)</div><div class="vpchips">'+allC.map(c=>'<button type="button" class="vpc" data-vfc="'+esc(c)+'" aria-pressed="'+VF.c.includes(c)+'">'+cdot(c)+esc(c)+'</button>').join('')+'<button type="button" class="vpc" data-vfadd="c">+ Autre</button></div>'+
-   (VF.t.length?'<div class="small"><b>Combien vous en avez</b> ('+esc(unit)+')</div><div class="vgrid" style="grid-template-columns:minmax(56px,auto) repeat('+cols.length+',minmax(54px,1fr))"><span></span>'+cols.map(c=>'<span class="h">'+cdot(c)+esc(c||'Qté')+'</span>').join('')+
+   (VF.t.length?'<div class="small"><b>Combien vous en avez pour chaque taille / couleur</b> ('+esc(unit)+') : écrivez le nombre de pièces dans chaque case</div><div class="vgrid" style="grid-template-columns:minmax(56px,auto) repeat('+cols.length+',minmax(54px,1fr))"><span></span>'+cols.map(c=>'<span class="h">'+cdot(c)+esc(c||'Qté')+'</span>').join('')+
      VF.t.map(t=>'<span class="h" style="text-align:left">'+esc(t==='Unique'?'—':t)+'</span>'+cols.map(c=>'<input inputmode="decimal" data-vq="'+esc(t+'|'+c)+'" value="'+esc(VF.q[t+'|'+c]!=null?VF.q[t+'|'+c]:'')+'" placeholder="0">').join('')).join('')+'</div><div class="small">Total : <b id="vfTot">'+vfTotal()+'</b> '+esc(unit)+'</div>'
     :'<div class="small">Choisissez au moins une '+(K?'qualité':'taille')+' (ou « Unique »).</div>')+
    (K?'<div class="grid2"><label class="f"><span>Une pièce entière fait <span class="opt">(m)</span></span><input id="vfPkLen" inputmode="decimal" value="'+esc(VF.pkLen)+'" placeholder="Ex : 10"></label><label class="f"><span>Prix pièce entière <span class="opt">(F)</span></span><input id="vfPkPrice" inputmode="numeric" value="'+esc(VF.pkPrice)+'" placeholder="Ex : 45000"></label></div><div class="small">Le prix de vente plus haut est le prix d\'<b>1 mètre</b>. Mettez « Vendu par : m » dans « Plus de détails ».</div>':'')+
@@ -2291,6 +2291,9 @@ function lookGate(){const t=S?btype():'tout';const r=document.documentElement;if
   if(t==='cosm'){S.products=[P('Parfum oriental 100 ml','pièce',6500,10000,12,3,addDays(d,700)),P('Crème karité 250 g','pot',2000,3500,20,5,addDays(d,240)),P('Mèches brésiliennes','paquet',9000,15000,6,2),P('Rouge à lèvres mat','pièce',1500,3000,25,5,addDays(d,500)),P('Lait de toilette','bouteille',2500,4500,2,4,addDays(d,20))];reset();}
   if(t==='quinc'){S.products=[P('Ciment 50 kg','sac',4100,4500,120,20),P('Fer de 10','barre',3200,3800,200,50),P('Peinture blanche 20 L','seau',18000,23000,10,3),P('Tuyau PVC 100','barre',3500,4500,40,10),P('Carreaux 40x40','m²',4500,6000,80,20)];reset();}
   writeLocal();};}
+
+// Avec des tailles : toucher « Total » amène au tableau des quantités
+document.addEventListener('focusin',e=>{if(e.target.id!=='prQty'||!VF||!vfOn())return;e.target.blur();const f=document.querySelector('[data-vq]');if(f){f.scrollIntoView({block:'center',behavior:'smooth'});setTimeout(()=>f.focus(),350);}else{const b=$('vfBox');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});}});
 
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
