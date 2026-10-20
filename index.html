@@ -317,6 +317,11 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
 .vgrid input{text-align:center;padding:9px 4px;min-width:0;width:100%}
 .vgrid .h{font-size:13px;font-weight:700;text-align:center;color:var(--muted);white-space:nowrap}
 .vfbox{margin:4px 0}
+.btlist{display:flex;flex-direction:column;gap:8px}
+.btc{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit;cursor:pointer}
+.btc b{display:block;font-size:16px}.btc small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.35}
+.btc .bte{font-size:26px;line-height:1}
+.btc[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 </style>
 
 <div id="app"></div>
@@ -718,7 +723,7 @@ function vHome(){const t=effToday();const today=S.sales.filter(s=>s.date.slice(0
 
 // ===== Vendre =====
 function newDraft(){return{lines:[],client:'',phone:'',mode:'Espèces',paid:'',due:'',gros:false,q:'',free:false,fName:'',fQty:'1',fPrice:'',fromQuote:null};}
-function lineHTML(l,i){return '<div class="li"><div class="li-name">'+esc(l.name)+'<small>'+esc(l.unit||'pièce')+(l.pid?(prod(l.pid)?' · stock '+q2(lnAvail(l))+(l.pk?' '+esc(prod(l.pid).unit):''):''):' · hors stock')+'</small><small class="lw" id="lw'+i+'">'+lineWarn(l)+'</small></div><button class="x" aria-label="Retirer" data-act="delLine" data-i="'+i+'">×</button>'+
+function lineHTML(l,i){return '<div class="li"><div class="li-name">'+esc(l.name)+'<small>'+esc(l.unit||'pièce')+(l.pid?(prod(l.pid)&&!isArt()?' · stock '+q2(lnAvail(l))+(l.pk?' '+esc(prod(l.pid).unit):''):''):' · hors stock')+'</small><small class="lw" id="lw'+i+'">'+lineWarn(l)+'</small></div><button class="x" aria-label="Retirer" data-act="delLine" data-i="'+i+'">×</button>'+
   '<div class="li-ctrl"><div class="step"><button data-act="qm" data-i="'+i+'" aria-label="Moins">−</button><input class="li-qty" data-i="'+i+'" inputmode="decimal" value="'+q2(l.qty)+'" aria-label="Quantité"><button data-act="qp" data-i="'+i+'" aria-label="Plus">+</button></div>'+
   '<input class="li-price" data-i="'+i+'" inputmode="numeric" value="'+l.price+'" aria-label="Prix unitaire"><span class="li-amt" id="la'+i+'">'+F(l.qty*l.price)+'</span></div></div>';}
 function vSell(){if(!canWrite())return '<h2>Nouvelle vente</h2><div class="card empty">L\'abonnement est terminé. Payez l\'abonnement (Plus › Réglages) pour vendre.</div>';
@@ -739,7 +744,7 @@ function vSell(){if(!canWrite())return '<h2>Nouvelle vente</h2><div class="card 
   '<div class="money4">'+[1000,2000,5000,10000].map(v=>'<button class="segb bill" data-act="give" data-v="'+v+'">'+v.toLocaleString('fr-FR').replace(/\s/g,' ')+'</button>').join('')+'</div>'+
   '<div class="grid2"><button class="segb" data-act="give" data-v="exact">Exact</button><button class="segb" data-act="give" data-v="0">Effacer</button></div>'+
   '<div id="changeBox">'+changeHTML()+'</div>'+
-  '<button class="btn enc" id="encBtn" data-act="saveSale"'+(d.lines.length?'':' disabled')+'>'+encLabel()+'</button>'+(fashOn()&&d.lines.length?'<button class="btn line" data-act="lvCart">🛵 Commande à livrer</button>':'')+'</div>'+
+  '<button class="btn enc" id="encBtn" data-act="saveSale"'+(d.lines.length?'':' disabled')+'>'+encLabel()+'</button>'+(fashOn()&&d.lines.length?'<button class="btn line" data-act="lvCart">'+(isArt()?'🛠 Commande sur mesure':'🛵 Commande à livrer')+'</button>':'')+'</div>'+
   '<details class="more cli" id="cliBox"'+(d.showCli||d.mode==='Crédit'||d.client||d.fromQuote?' open':'')+'><summary>Crédit ou client connu</summary><div class="stack" style="margin-top:12px">'+
   '<button class="segb" data-act="mode" data-m="Crédit" aria-pressed="'+(d.mode==='Crédit')+'">'+(d.mode==='Crédit'?'✓ ':'')+'Le client paie plus tard (crédit)</button>'+
   '<label class="f">Nom du client<input id="dClient" list="clientsDL" value="'+esc(d.client)+'" placeholder="Obligatoire si crédit"></label><label class="f">Téléphone<input id="dPhone" inputmode="tel" value="'+esc(d.phone)+'" placeholder="77…"></label>'+
@@ -755,7 +760,7 @@ function renderResults(){const box=$('pResults');if(!box||!draft)return;const q=
   if(!q&&!draft.showAll){box.innerHTML='';return;}
   let r=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)||(p.code&&p.code.includes(q)));
   if(draft.showAll)r=r.slice().sort((a,b)=>(b.qty>0)-(a.qty>0)||a.name.localeCompare(b.name));else r=r.slice(0,6);
-  box.innerHTML=r.length?r.map(p=>'<button class="res" data-act="addProd" data-id="'+p.id+'"'+(p.qty<=0?' style="opacity:.5"':'')+'><span>'+thumb(p)+'<span style="min-width:0"><b>'+esc(p.name)+'</b><div class="s">stock '+q2(p.qty)+' '+esc(p.unit)+'</div></span></span><b>'+F(priceOf(p))+'</b></button>'+(canPk(p)&&!hasVar(p)?'<button class="res" data-act="addPk" data-id="'+p.id+'"><span>📦 <b>1 '+esc(pkName(p))+'</b>&nbsp;'+esc(p.name)+'</span><b>'+F(p.pricePk)+'</b></button>':'')).join(''):'<div class="small">Aucun article trouvé. Ajoutez-le dans Stock ou en « hors stock ».</div>';}
+  box.innerHTML=r.length?r.map(p=>'<button class="res" data-act="addProd" data-id="'+p.id+'"'+(p.qty<=0&&!isArt()?' style="opacity:.5"':'')+'><span>'+thumb(p)+'<span style="min-width:0"><b>'+esc(p.name)+'</b><div class="s">'+(isArt()?'à partir de':'stock '+q2(p.qty)+' '+esc(p.unit))+'</div></span></span><b>'+F(priceOf(p))+'</b></button>'+(canPk(p)&&!hasVar(p)?'<button class="res" data-act="addPk" data-id="'+p.id+'"><span>📦 <b>1 '+esc(pkName(p))+'</b>&nbsp;'+esc(p.name)+'</span><b>'+F(p.pricePk)+'</b></button>':'')).join(''):'<div class="small">Aucun article trouvé. Ajoutez-le dans Stock ou en « hors stock ».</div>';}
 const priceOf=p=>draft&&draft.gros&&p.priceGros>0?p.priceGros:p.price;
 function addProdToDraft(p,o){return addLine(p,o||{});}
 function readDraft(){if(!draft)return;const m={dClient:'client',dPhone:'phone',dPaid:'paid',dDue:'due',fName:'fName',fQty:'fQty',fPrice:'fPrice',pSearch:'q'};
@@ -794,7 +799,7 @@ function vStock(){const q=stockQ.trim().toLowerCase();
 function vMore(){const quotesOpen=S.quotes.filter(q=>q.status!=='vendu').length;const supOwe=S.suppliers.reduce((a,s)=>a+Math.max(0,supBalance(s.id)),0);
   const mStart=effToday().slice(0,8)+'01';const dep=S.expenses.filter(e=>e.date.slice(0,10)>=mStart).reduce((a,e)=>a+e.amount,0);
   const it=(t,ic,b,s)=>'<button class="mi" data-tab="'+t+'">'+svg(ic)+'<b>'+b+'</b><span>'+s+'</span></button>';
-  return '<h2>Plus</h2><div class="menu">'+it('report','chart','Bilan','Bénéfice, clôture, rapport PDF')+it('quotes','quote','Devis',quotesOpen+' en attente')+it('sup','truck','Fournisseurs',supOwe>0?'Je dois '+F(supOwe):'Achats et dettes')+it('exp','wallet','Dépenses','Ce mois : '+F(dep))+it('set','gear','Réglages','Abonnement, code, copie papier')+it('web','globe','Boutique en ligne',webOn()?'En ligne · '+S.products.filter(p=>p.web).length+' article(s)':'Vendre sur WhatsApp avec un lien')+(fashOn()?it('liv','truck','Livraisons',livSub()):'')+'</div>'+'<button class="btn" style="margin-top:12px;padding:16px;font-size:17px" data-act="carnetPdf">📄 Imprimer tout mon carnet (PDF)</button>'+
+  return '<h2>Plus</h2><div class="menu">'+it('report','chart','Bilan','Bénéfice, clôture, rapport PDF')+it('quotes','quote','Devis',quotesOpen+' en attente')+it('sup','truck','Fournisseurs',supOwe>0?'Je dois '+F(supOwe):'Achats et dettes')+it('exp','wallet','Dépenses','Ce mois : '+F(dep))+it('set','gear','Réglages','Abonnement, code, copie papier')+it('web','globe','Boutique en ligne',webOn()?'En ligne · '+S.products.filter(p=>p.web).length+' article(s)':'Vendre sur WhatsApp avec un lien')+(fashOn()?it('liv','truck',isArt()?'Commandes':'Livraisons',livSub()):'')+'</div>'+'<button class="btn" style="margin-top:12px;padding:16px;font-size:17px" data-act="carnetPdf">📄 Imprimer tout mon carnet (PDF)</button>'+
   (S.pin?'<div class="small" style="margin-top:14px">'+(unlocked?'Mode patron ouvert. <button class="back" style="margin:0" data-act="lock">Verrouiller</button>':'Le bilan, les fournisseurs, le stock et les réglages demandent le code patron.')+'</div>':'');}
 function vQuotes(){const qs=S.quotes.slice().reverse();
   return '<button class="back" data-tab="more">‹ Plus</button><h2>Devis / proforma</h2><div class="small" style="margin-bottom:10px">Pour faire un devis : allez dans Vendre, remplissez le panier puis « Faire un devis ».</div>'+
@@ -833,7 +838,7 @@ function vSet(){const L=licState();const msg='Bonjour '+SUPPORT_NAME+', je veux 
   '<div class="small">Prix : '+PRIX_MOIS+' par mois, par Wave ou Orange Money au '+(PAY_NUM||SUPPORT_WA.replace(/^221(\d\d)(\d{3})(\d\d)(\d\d)$/,'+221 $1 $2 $3 $4'))+'. Après le paiement, l\'abonnement s\'active tout seul.</div>'+
   '<a class="btn ghost" target="_blank" rel="noopener" href="'+waLink(SUPPORT_WA,msg)+'">Contacter '+SUPPORT_NAME+' sur WhatsApp</a>'+
   '<button class="btn" data-act="chkSub">Vérifier mon abonnement</button><div class="small">Après le paiement, appuyez sur « Vérifier mon abonnement ».</div></div>'+
-  paperCard()+(webOn()?'<h3>Boutique en ligne</h3>'+webLinkCard(false)+'<button class="btn line" data-tab="web" style="margin-top:8px">Gérer la boutique en ligne</button>':'')+'<h3>Ma boutique</h3><form id="fShop" class="card stack"><label class="f">Nom<input id="sName" value="'+esc(S.shop.name)+'"></label><label class="f">Propriétaire<input id="sOwner" value="'+esc(S.shop.owner)+'"></label><div class="grid2"><label class="f">Téléphone<input id="sPhone" value="'+esc(S.shop.phone)+'"></label><label class="f">Adresse<input id="sAddr" value="'+esc(S.shop.address)+'"></label></div><label class="f">Message en bas des factures<input id="sFoot" value="'+esc(S.shop.footer||'')+'" placeholder="Merci pour votre confiance !"></label><button class="btn line" type="submit">Enregistrer</button></form>'+payQrCard()+
+  btCard()+paperCard()+(webOn()?'<h3>Boutique en ligne</h3>'+webLinkCard(false)+'<button class="btn line" data-tab="web" style="margin-top:8px">Gérer la boutique en ligne</button>':'')+'<h3>Ma boutique</h3><form id="fShop" class="card stack"><label class="f">Nom<input id="sName" value="'+esc(S.shop.name)+'"></label><label class="f">Propriétaire<input id="sOwner" value="'+esc(S.shop.owner)+'"></label><div class="grid2"><label class="f">Téléphone<input id="sPhone" value="'+esc(S.shop.phone)+'"></label><label class="f">Adresse<input id="sAddr" value="'+esc(S.shop.address)+'"></label></div><label class="f">Message en bas des factures<input id="sFoot" value="'+esc(S.shop.footer||'')+'" placeholder="Merci pour votre confiance !"></label><button class="btn line" type="submit">Enregistrer</button></form>'+payQrCard()+
   fashCard()+'<h3>Écran de vente</h3><div class="card stack"><div class="seg"><button class="segb" type="button" data-ck="setMode" data-m="normal" aria-pressed="'+(S.sellMode!=='caisse')+'">Écran normal</button><button class="segb" type="button" data-ck="setMode" data-m="caisse" aria-pressed="'+(S.sellMode==='caisse')+'">Mode caisse</button></div><div class="small">Mode caisse : pavé de chiffres et gros boutons de couleur, comme une caisse de magasin. Les gros boutons sont les articles en favori. Vous pouvez changer quand vous voulez.</div></div>'+
   '<h3>Lecteur de code-barres</h3><div class="card stack"><div class="small">Un lecteur Bluetooth (pistolet) marche avec Carnet Boutique. Pour le connecter : allumez-le en mode Bluetooth, puis sur le téléphone allez dans Réglages › Bluetooth et choisissez-le.</div><div class="small">Ensuite, dans Vente, scannez les articles l\'un après l\'autre : chaque scan met l\'article dans le panier. Puis vérifiez et encaissez sur le téléphone.</div><div class="small">Toutes les marques marchent (Netum, Eyoyo, Tera, Inateck, Symcode, Honeywell, Zebra, sans marque…), sur iPhone, Android et caisse POS Android : il faut que le lecteur soit en mode clavier (HID), c\'est le réglage normal.</div><div class="small">Test : restez sur cette page et scannez un code. Le téléphone doit afficher « Lecteur OK ».</div></div>'+
   '<h3>Affichage</h3><div class="card stack"><label class="chk"><input type="checkbox" data-big'+(document.documentElement.classList.contains('big')?' checked':'')+'>Lettres plus grandes</label><div class="small">Pour ceux qui voient mal : tout devient plus grand sur ce téléphone.</div>'+
@@ -879,7 +884,7 @@ function showProd(id,pre){const base=id?prod(id):{name:'',code:'',unit:'pièce',
   '<button class="btn" data-act="saveProd" data-id="'+(id||'')+'">Enregistrer</button></div>'+
   (id&&webOn()?'<div style="margin-top:10px"><button class="btn ghost" data-act="webProd" data-id="'+id+'">🌐 Boutique en ligne'+(prod(id)&&prod(id).web?' · visible':' · pas visible')+'</button></div>':'')+(id?'<div style="margin-top:10px"><button class="btn line" data-act="lblOpen" data-id="'+id+'">🏷 Étiquette prix (40 mm)</button></div>':'')+
   (id?(hasVar(p)?'<div class="small" style="margin-top:12px">Marchandise arrivée : changez les quantités de chaque taille / couleur plus haut, puis Enregistrer.</div>':'<h3>Marchandise arrivée</h3><div class="card stack"><label class="f">Pièces reçues<input id="prIn" inputmode="decimal" placeholder="Ex : 50"></label>'+(p.pack>0?'<label class="f">Ou cartons reçus (× '+p.pack+')<input id="prInPk" inputmode="numeric" placeholder="Ex : 2"></label>':'')+'<button class="btn ghost" data-act="stockIn" data-id="'+id+'">Ajouter au stock</button></div>')+'<div id="delZone" style="margin-top:14px"><button class="btn danger" data-act="askDel" data-id="'+id+'">Supprimer l\'article</button></div>':''));
-  updGain();vfPaint();}
+  updGain();vfPaint();prodGate();}
 function buyIsCarton(){const b=$('buyC');return b&&!b.hidden;}
 function updGain(){const g=$('prGain');if(!g)return;
   if(buyIsCarton()){const n=num(val('prPack')),pp=num(val('prPkPrice'));const c=$('prCost');if(n>0&&pp>0&&c)c.value=String(Math.round(pp/n*100)/100);}
@@ -1293,7 +1298,7 @@ document.addEventListener('click',e=>{
     S.sales.push(s);save();sayChange(s);draft=null;tab='home';render();showDoc('s',s);},
   saveQuote:()=>{readDraft();if(!w())return;const d=draft;d.lines=d.lines.filter(l=>l.qty>0);if(!d.lines.length)return toast('Panier vide');
     S.seq.quote++;const q={id:uid(),no:S.seq.quote,date:nowStamp(),client:d.client.trim(),phone:d.phone.trim(),lines:d.lines.map(l=>({...l})),total:d.lines.reduce((s,l)=>s+l.qty*l.price,0),status:'ouvert'};
-    S.quotes.push(q);save();draft=null;tab='quotes';render();showDoc('q',q);},
+    S.quotes.push(q);if(d.fromWeb)webCmdSet(d.fromWeb,'vendu');save();draft=null;tab='quotes';render();showDoc('q',q);},
   quoteToSale:()=>{if(!w())return;const q=S.quotes.find(x=>x.id===id);draft=newDraft();Object.assign(draft,{lines:q.lines.map(l=>({...l})),client:q.client,phone:q.phone,fromQuote:q.id});tab='sell';closeSheet();render();scrollTo(0,0);toast('Vérifiez les prix et le stock, puis enregistrez');},
   askDelQ:()=>{$('delZone').innerHTML='<div class="banner bad"><span>Supprimer ce devis ?</span><div class="grid2"><button class="btn danger" data-act="delQ" data-id="'+id+'">Oui</button><button class="btn line" data-act="close">Non</button></div></div>';},
   delQ:()=>{S.quotes=S.quotes.filter(q=>q.id!==id);save();closeSheet();render();},
@@ -1381,7 +1386,7 @@ function vCaisse(){if(!draft)draft=newDraft();const d=draft;const c=calc();const
   let panel='';
   if(CX.panel==='pad')panel='<div class="cx-screen"><span id="cxHint">'+esc(cxHint())+'</span><b id="cxBuf" data-notr>'+esc(CX.buf||'0')+'</b></div><div class="cx-keys">'+
     keys.map(k=>'<button type="button" class="cx-k'+(k==='C'?' c':/[XRL]/.test(k)?' op':'')+'" data-ck="key" data-k="'+k+'">'+(kl[k]||k)+'</button>').join('')+'</div>';
-  else if(CX.panel==='fav')panel=favs.length?'<div class="cx-favs">'+favs.map(p=>{const left=q2(p.qty-inC(p.id));return '<button type="button" class="cx-p'+(left<=0?' fini':'')+'" style="background:'+cxCol(p)+'" data-ck="prod" data-id="'+p.id+'"><span class="st">'+(left<=0?'Fini':left)+'</span><span class="nm">'+esc(p.name)+'</span><em>'+F(priceOf(p))+'</em></button>';}).join('')+'</div>'
+  else if(CX.panel==='fav')panel=favs.length?'<div class="cx-favs">'+favs.map(p=>{const left=q2(p.qty-inC(p.id));return '<button type="button" class="cx-p'+(left<=0&&!isArt()?' fini':'')+'" style="background:'+cxCol(p)+'" data-ck="prod" data-id="'+p.id+'"><span class="st">'+(left<=0?'Fini':left)+'</span><span class="nm">'+esc(p.name)+'</span><em>'+F(priceOf(p))+'</em></button>';}).join('')+'</div>'
     :'<div class="cx-note">Pas encore de gros boutons. Dans Stock, ouvrez un article › Plus de détails › cochez « Mettre un bouton dans Vente rapide ». En attendant, utilisez « Stock » ou le scanner.</div>';
   else panel='<input id="pSearch" type="search" placeholder="Chercher un article" value="'+esc(d.q)+'" autocomplete="off"><div class="results all" id="pResults"></div>';
   const sw=[['pad','Pavé'],['fav','Boutons'],['stock','Stock']];
@@ -1683,7 +1688,7 @@ function vCmd(){if(SB&&USER&&WCMD_SEEN===null)webCmdLoad(true);
      '<div>'+(d.lignes||[]).map(l=>'<div class="kv"><span>'+l.q+' × '+esc(l.nom)+'</span><b>'+F(l.prix*l.q)+'</b></div>').join('')+'<div class="total"><span>TOTAL</span><b>'+F(d.total)+'</b></div></div>'+
      (d.note?'<div class="small">📝 '+esc(d.note)+'</div>':'')+
      (low.length?'<div class="banner warn"><span>Stock pas suffisant : '+low.map(l=>esc(l.nom)).join(', ')+'</span></div>':'')+
-     '<button class="btn" data-act="cmdOk" data-id="'+c.id+'">Confirmer et encaisser</button>'+(fashOn()?'<button class="btn line" data-act="lvWeb" data-id="'+c.id+'">🛵 Confirmer : à livrer</button>':'')+
+     (isArt()?'<button class="btn" data-act="cmdDevis" data-id="'+c.id+'">📝 Faire le devis</button>':'<button class="btn" data-act="cmdOk" data-id="'+c.id+'">Confirmer et encaisser</button>')+(fashOn()?'<button class="btn line" data-act="lvWeb" data-id="'+c.id+'">🛵 Confirmer : à livrer</button>':'')+
      '<div class="grid2"><a class="btn ghost" target="_blank" rel="noopener" href="'+waLink(d.tel,cmdWaText(c))+'">💬 WhatsApp</a>'+
      (WCMD_ASK===c.id?'<button class="btn danger" data-act="cmdNo" data-id="'+c.id+'">Oui, refuser</button>':'<button class="btn line" data-act="cmdAskNo" data-id="'+c.id+'">Refuser</button>')+'</div></div>';}).join('<div style="height:12px"></div>')
    :'<div class="list"><div class="empty">Aucune nouvelle commande.<br>Partagez votre lien pour recevoir des commandes.</div></div>')+
@@ -1751,7 +1756,7 @@ async function pushResync(){if(pushSynced||pushDemo()||!pushFlag()||!pushOk()||N
    Vente au carton / pièce entière : pour tous les articles qui ont un prix de
    vente du carton (ou de la pièce de tissu).
    ====================================================================== */
-const fashOn=()=>!!(S&&S.fash&&S.fash.on);
+const fashOn=()=>{const t=S&&S.btype;return ['mode','cosm','art'].includes(t)||!!(S&&(!t||t==='tout')&&S.fash&&S.fash.on);};
 const hasVar=p=>!!(p&&Array.isArray(p.var)&&p.var.length);
 const isSoft=u=>['m','kg','litre','m²'].includes(u);
 const canPk=p=>!!(p&&p.pack>0&&p.pricePk>0);
@@ -1771,12 +1776,12 @@ function cdot(c){const k=String(c||'').toLowerCase().trim();const h=COLS[k.repla
 const lnPk=l=>l.pk>0?l.pk:1;
 const lnHasV=l=>l.vt!=null;
 function lnSame(a,b){return a.pid===b.pid&&(!hasVar(prod(a.pid))||(a.vt===b.vt&&a.vc===b.vc));}
-function lnAvail(l){const p=l.pid&&prod(l.pid);if(!p)return Infinity;if(hasVar(p)&&lnHasV(l)){const v=vFind(p,l.vt,l.vc);return v?v.q:0;}return p.qty;}
+function lnAvail(l){const p=l.pid&&prod(l.pid);if(!p||isArt())return Infinity;if(hasVar(p)&&lnHasV(l)){const v=vFind(p,l.vt,l.vc);return v?v.q:0;}return p.qty;}
 function lnUsed(l,lines){return q2(lines.filter(x=>x.pid&&lnSame(x,l)).reduce((a,x)=>a+x.qty*lnPk(x),0));}
 function overLines(lines){return lines.filter(l=>l.pid&&prod(l.pid)&&lnUsed(l,lines)>lnAvail(l)+1e-9);}
 function fitLines(lines){const used={};lines.forEach(l=>{const p=l.pid&&prod(l.pid);if(!p)return;const k=l.pid+'|'+(hasVar(p)&&lnHasV(l)?l.vt+'|'+l.vc:'');
   const left=Math.max(0,lnAvail(l)-(used[k]||0));let can=q2(left/lnPk(l));if(l.pk)can=Math.floor(can);if(l.qty>can)l.qty=can;used[k]=(used[k]||0)+l.qty*lnPk(l);});}
-function lnMove(l,sign){const p=l.pid&&prod(l.pid);if(!p)return;let n=q2(l.qty*lnPk(l));
+function lnMove(l,sign){const p=l.pid&&prod(l.pid);if(!p||isArt())return;let n=q2(l.qty*lnPk(l));
   if(!hasVar(p)){p.qty=q2(p.qty+sign*n);return;}
   const v=lnHasV(l)?vFind(p,l.vt,l.vc):null;
   if(v)v.q=q2(v.q+sign*n);
@@ -1844,7 +1849,7 @@ const VF_C=['Noir','Blanc','Rouge','Bleu','Vert','Jaune','Rose','Beige','Marron'
 function vfInit(p,pre){if(pre&&VF&&VF.pid===(p.id||''))return;
   VF={pid:p.id||'',on:hasVar(p),vk:p.vk||'taille',t:hasVar(p)?uniqA(p.var.map(v=>v.t)):[],c:hasVar(p)?uniqA(p.var.map(v=>v.c)).filter(Boolean):[],q:{},more:[],moreC:[],pkLen:p.vk==='qualite'&&p.pack>0?String(p.pack):'',pkPrice:p.vk==='qualite'&&p.pricePk>0?String(p.pricePk):''};
   if(hasVar(p))p.var.forEach(v=>{VF.q[v.t+'|'+v.c]=v.q;});}
-function vfHTML(p){return fashOn()||hasVar(p)?'<div id="vfBox" class="vfbox"></div>':'';}
+function vfHTML(p){return varOn()||hasVar(p)?'<div id="vfBox" class="vfbox"></div>':'';}
 const vfOn=()=>!!(VF&&VF.on&&VF.t.length);
 function vfCols(){return VF.c.length?VF.c:[''];}
 function vfTotal(){if(!vfOn())return 0;let s=0;VF.t.forEach(t=>vfCols().forEach(c=>{s+=num(VF.q[t+'|'+c]||0);}));return q2(s);}
@@ -1892,6 +1897,8 @@ function swapLine(lines,i,done){const l=lines[i];const p=l&&l.pid&&prod(l.pid);i
 let LF=null,LVF='cours',LV_ASK=null;
 const LV_SRC=['TikTok','WhatsApp','Instagram','Facebook','Snapchat','Boutique','En ligne'];
 const LV_ST={prep:['À préparer','w'],route:['En route','w'],livree:['Livrée','g'],annulee:['Annulée','']};
+const LV_ART={prep:['En fabrication','w'],route:['Prête','w'],livree:['Livrée / posée','g'],annulee:['Annulée','']};
+const lvStL=s=>(isArt()?LV_ART:LV_ST)[s]||(isArt()?LV_ART:LV_ST).prep;
 const lvArt=v=>v.lines.reduce((a,l)=>a+l.qty*l.price,0);
 const lvTot=v=>lvArt(v)+(+v.frais||0);
 const lvReste=v=>v.pay==='avant'?0:Math.max(0,lvTot(v)-(+v.acompte||0));
@@ -1899,10 +1906,10 @@ const lvActive=()=>(S.livs||[]).filter(v=>v.st==='prep'||v.st==='route');
 function livSub(){const a=lvActive();return a.length?a.length+' en cours · '+F(a.reduce((s,v)=>s+lvReste(v),0))+' à encaisser':'Commandes avec livraison';}
 function lvOpen(L){fashDef();LF=Object.assign({client:'',phone:'',adr:'',zone:'',frais:'',src:'',pay:'livraison',payWith:'Espèces',acompte:'',note:''},L);
   const z=S.fash.zones.find(x=>x.n===LF.zone);if(z&&LF.frais==='')LF.frais=String(z.p);lvPaint();}
-function lvRead(){const m={lfNom:'client',lfTel:'phone',lfAdr:'adr',lfFrais:'frais',lfAc:'acompte',lfNote:'note'};Object.keys(m).forEach(k=>{const e=$(k);if(e)LF[m[k]]=e.value;});}
+function lvRead(){const m={lfNom:'client',lfTel:'phone',lfAdr:'adr',lfFrais:'frais',lfAc:'acompte',lfNote:'note',lfDate:'dateL'};Object.keys(m).forEach(k=>{const e=$(k);if(e)LF[m[k]]=e.value;});}
 function lvPaint(){const L=LF;const art=L.lines.reduce((a,l)=>a+l.qty*l.price,0),tot=art+num(L.frais),reste=L.pay==='avant'?0:Math.max(0,tot-num(L.acompte));
   const Z=S.fash.zones;
-  openSheet('Commande à livrer','<div class="card">'+L.lines.map(l=>'<div class="kv"><span>'+q2(l.qty)+' × '+esc(l.name)+'</span><b>'+F(l.qty*l.price)+'</b></div>').join('')+'</div>'+
+  openSheet(isArt()?'Commande sur mesure':'Commande à livrer','<div class="card">'+L.lines.map(l=>'<div class="kv"><span>'+q2(l.qty)+' × '+esc(l.name)+'</span><b>'+F(l.qty*l.price)+'</b></div>').join('')+'</div>'+
    '<div class="card stack" style="margin-top:10px">'+
    '<div class="grid2"><label class="f">Nom du client<input id="lfNom" value="'+esc(L.client)+'" placeholder="Ex : Awa Ndiaye"></label><label class="f">Téléphone<input id="lfTel" inputmode="tel" value="'+esc(L.phone)+'" placeholder="77…"></label></div>'+
    '<label class="f">Adresse / repère<input id="lfAdr" value="'+esc(L.adr)+'" placeholder="Ex : Parcelles U17, près de la pharmacie"></label>'+
@@ -1913,30 +1920,31 @@ function lvPaint(){const L=LF;const art=L.lines.reduce((a,l)=>a+l.qty*l.price,0)
    '<div class="f" style="gap:6px"><span>Paiement</span><div class="seg"><button type="button" class="segb" data-act="lfPay" data-v="livraison" aria-pressed="'+(L.pay!=='avant')+'">À la livraison</button><button type="button" class="segb" data-act="lfPay" data-v="avant" aria-pressed="'+(L.pay==='avant')+'">Déjà payé</button></div>'+
      '<div class="seg" style="grid-template-columns:repeat(3,1fr)">'+['Espèces','Wave','Orange Money'].map(m=>'<button type="button" class="segb" data-act="lfWith" data-v="'+m+'" aria-pressed="'+(L.payWith===m)+'">'+(m==='Orange Money'?'OM':m)+'</button>').join('')+'</div></div>'+
    (L.pay!=='avant'?'<label class="f"><span>Acompte déjà reçu <span class="opt">(F, s\'il y en a)</span></span><input id="lfAc" inputmode="numeric" value="'+esc(L.acompte)+'" placeholder="0"></label>':'')+
+   '<label class="f"><span>'+(isArt()?'Date de livraison / pose':'Date de livraison')+' <span class="opt">(pas obligatoire)</span></span><input id="lfDate" type="date" value="'+esc(L.dateL||'')+'"></label>'+
    '<label class="f"><span>Note <span class="opt">(pas obligatoire)</span></span><input id="lfNote" value="'+esc(L.note)+'" placeholder="Ex : livrer après 17 h"></label>'+
    '<div class="kv"><span>Articles</span><b>'+F(art)+'</b></div><div class="kv"><span>Livraison</span><b>'+F(num(L.frais))+'</b></div><div class="total"><span>TOTAL</span><b>'+F(tot)+'</b></div>'+
    '<div class="banner '+(reste>0?'warn':'')+'" style="'+(reste>0?'':'background:var(--accent-soft);color:var(--accent)')+'"><b>'+(reste>0?'À encaisser à la livraison : '+F(reste):'Déjà payé : rien à encaisser')+'</b></div>'+
-   '<button class="btn" data-act="lfSave">Enregistrer la commande</button><div class="small">Les articles sont mis de côté : le stock baisse tout de suite. La vente s\'enregistre quand la commande est livrée.</div></div>');}
+   '<button class="btn" data-act="lfSave">Enregistrer la commande</button><div class="small">'+(isArt()?'La vente s\'enregistre quand la commande est livrée. L\'acompte reste noté dans la commande.':'Les articles sont mis de côté : le stock baisse tout de suite. La vente s\'enregistre quand la commande est livrée.')+'</div></div>');}
 function lvMsg(v){const shop=(S.web&&S.web.nom)||S.shop.name;const r=lvReste(v);
   if(v.st==='prep')return 'Bonjour '+v.client+', c\'est '+shop+'. Votre commande N° '+v.no+' est confirmée ✅\n'+v.lines.map(l=>'• '+q2(l.qty)+' × '+l.name+' = '+F(l.qty*l.price)).join('\n')+(+v.frais?'\nLivraison'+(v.zone?' ('+v.zone+')':'')+' : '+F(v.frais):'')+'\nTotal : '+F(lvTot(v))+(+v.acompte&&v.pay!=='avant'?'\nAcompte reçu : '+F(v.acompte):'')+'\n'+(r>0?'À payer à la livraison : '+F(r):'Déjà payé, merci !');
-  if(v.st==='route')return 'Bonjour '+v.client+', votre commande N° '+v.no+' de '+shop+' est en route 🛵 Le livreur vous appelle bientôt.'+(r>0?'\nÀ payer à la livraison : '+F(r):'');
+  if(v.st==='route')return isArt()?'Bonjour '+v.client+', votre commande N° '+v.no+' chez '+shop+' est prête ✅ On vous appelle pour la livraison / pose.'+(r>0?'\nReste à payer : '+F(r):''):'Bonjour '+v.client+', votre commande N° '+v.no+' de '+shop+' est en route 🛵 Le livreur vous appelle bientôt.'+(r>0?'\nÀ payer à la livraison : '+F(r):'');
   if(v.st==='livree')return 'Merci '+v.client+' pour votre achat chez '+shop+' ! À bientôt 🙏';
   return 'Bonjour '+v.client+', votre commande N° '+v.no+' chez '+shop+' a été annulée.';}
-function lvCard(v){const st=LV_ST[v.st]||LV_ST.prep,r=lvReste(v),act=v.st==='prep'||v.st==='route';
+function lvCard(v){const st=lvStL(v.st),r=lvReste(v),act=v.st==='prep'||v.st==='route';
   return '<div class="card stack"><div class="kv" style="border:0;padding:0"><b>N° '+v.no+' · '+esc(v.client)+'</b><span class="tag '+st[1]+'">'+st[0]+'</span></div>'+
-   '<div class="small">📞 '+esc(v.phone)+(v.adr||v.zone?' · 📍 '+esc([v.adr,v.zone].filter(Boolean).join(' — ')):'')+(v.src?' · '+esc(v.src):'')+' · '+fdate(v.date)+'</div>'+
+   '<div class="small">'+(v.dateL?'📅 '+(isArt()?'Livraison / pose':'Livraison')+' le '+fdate(v.dateL)+'<br>':'')+'📞 '+esc(v.phone)+(v.adr||v.zone?' · 📍 '+esc([v.adr,v.zone].filter(Boolean).join(' — ')):'')+(v.src?' · '+esc(v.src):'')+' · '+fdate(v.date)+'</div>'+
    '<div>'+v.lines.map((l,i)=>'<div class="kv"><span>'+q2(l.qty)+' × '+esc(l.name)+'</span><b>'+F(l.qty*l.price)+'</b></div>').join('')+(+v.frais?'<div class="kv"><span>Livraison</span><b>'+F(v.frais)+'</b></div>':'')+'<div class="total"><span>TOTAL</span><b>'+F(lvTot(v))+'</b></div></div>'+
    (v.note?'<div class="small">📝 '+esc(v.note)+'</div>':'')+
    (act?'<div class="banner '+(r>0?'warn':'')+'" style="'+(r>0?'':'background:var(--accent-soft);color:var(--accent)')+'"><b>'+(r>0?'À encaisser : '+F(r):'Déjà payé ('+esc(v.payWith)+')')+'</b>'+(+v.acompte&&v.pay!=='avant'?'<span>Acompte reçu : '+F(v.acompte)+'</span>':'')+'</div>':'')+
-   (act?(v.st==='prep'?'<button class="btn" data-act="lvGo" data-id="'+v.id+'">🛵 Partie en livraison</button>':'')+'<button class="btn '+(v.st==='prep'?'ghost':'')+'" data-act="lvDone" data-id="'+v.id+'">✅ Livrée'+(r>0?' et payée':'')+'</button>':'')+
+   (act?(v.st==='prep'?'<button class="btn" data-act="lvGo" data-id="'+v.id+'">'+(isArt()?'✅ Elle est prête':'🛵 Partie en livraison')+'</button>':'')+'<button class="btn '+(v.st==='prep'?'ghost':'')+'" data-act="lvDone" data-id="'+v.id+'">✅ Livrée'+(r>0?' et payée':'')+'</button>':'')+
    '<div class="grid2"><a class="btn line" target="_blank" rel="noopener" href="'+waLink(v.phone,lvMsg(v))+'">💬 WhatsApp</a>'+
    (act&&v.lines.some(l=>lnHasV(l)&&hasVar(prod(l.pid)))?'<button class="btn line" data-act="lvSwap" data-id="'+v.id+'">↔ Changer taille</button>':v.sale?'<button class="btn line" data-act="showSale" data-id="'+v.sale+'">Voir la facture</button>':'<span></span>')+'</div>'+
    (act?(LV_ASK===v.id?'<div class="banner bad"><span>Annuler cette commande ? Les articles reviennent dans le stock.'+(+v.acompte?' Rendez l\'acompte ('+F(v.acompte)+') au client.':'')+'</span><div class="grid2"><button class="btn danger" data-act="lvNo" data-id="'+v.id+'">Oui, annuler</button><button class="btn line" data-act="lvAskNo" data-id="">Non</button></div></div>':'<button class="back" data-act="lvAskNo" data-id="'+v.id+'">Annuler la commande</button>'):'')+'</div>';}
 function vLiv(){fashDef();const all=S.livs.slice().reverse();const a=lvActive();
   const ls=all.filter(v=>LVF==='cours'?(v.st==='prep'||v.st==='route'):v.st===LVF).slice(0,60);
-  return '<button class="back" data-tab="more">‹ Plus</button><h2>Livraisons</h2>'+
-  '<div class="stats"><div class="stat"><div class="k">En cours</div><div class="v">'+a.length+'</div><div class="small">'+a.filter(v=>v.st==='route').length+' en route</div></div><div class="stat"><div class="k">À encaisser</div><div class="v">'+F(a.reduce((s,v)=>s+lvReste(v),0))+'</div><div class="small">à la livraison</div></div></div>'+
-  '<button class="btn" data-tab="sell" style="margin-top:12px">+ Nouvelle commande</button><div class="small" style="margin:6px 0 12px">Remplissez le panier dans Vendre, puis appuyez sur « 🛵 Commande à livrer ». Les commandes de votre boutique en ligne arrivent dans 🛒.</div>'+
+  return '<button class="back" data-tab="more">‹ Plus</button><h2>'+(isArt()?'Commandes sur mesure':'Livraisons')+'</h2>'+
+  '<div class="stats"><div class="stat"><div class="k">En cours</div><div class="v">'+a.length+'</div><div class="small">'+a.filter(v=>v.st==='route').length+(isArt()?' prête(s)':' en route')+'</div></div><div class="stat"><div class="k">À encaisser</div><div class="v">'+F(a.reduce((s,v)=>s+lvReste(v),0))+'</div><div class="small">à la livraison</div></div></div>'+
+  '<button class="btn" data-tab="sell" style="margin-top:12px">+ Nouvelle commande</button><div class="small" style="margin:6px 0 12px">'+(isArt()?'Depuis un devis : ouvrez-le (Plus › Devis) et appuyez sur « Le client accepte ». Ou remplissez le panier dans Vendre, puis « 🛠 Commande sur mesure ».':'Remplissez le panier dans Vendre, puis appuyez sur « 🛵 Commande à livrer ». Les commandes de votre boutique en ligne arrivent dans 🛒.')+'</div>'+
   '<div class="seg" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">'+[['cours','En cours'],['livree','Livrées'],['annulee','Annulées']].map(([k,l])=>'<button class="segb" data-act="lvF" data-v="'+k+'" aria-pressed="'+(LVF===k)+'">'+l+'</button>').join('')+'</div>'+
   (ls.length?ls.map(lvCard).join('<div style="height:12px"></div>'):'<div class="list"><div class="empty">'+(LVF==='cours'?'Aucune commande à livrer.':'Rien ici pour le moment.')+'</div></div>');}
 function lvDoneSheet(v){const r=lvReste(v);
@@ -1957,6 +1965,10 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if
   else if(a==='lvWeb'){if(!w())return;const c=WCMD.find(x=>String(x.id)===String(id));if(!c)return;const d=c.data||{};
     const ls=(d.lignes||[]).map(webLine);const ret=d.mode==='retrait';
     lvOpen({lines:ls,client:d.nom||'',phone:d.tel||'',adr:d.adresse||'',zone:ret?'Retrait':(d.zone||''),frais:ret?'0':(d.frais>0?String(d.frais):''),src:'En ligne',payWith:['Wave','Orange Money'].includes(d.paiement)?d.paiement:'Espèces',note:d.note||'',web:c.id});}
+  else if(a==='lvQuote'){if(!w())return;const q=S.quotes.find(x=>x.id===id);if(!q)return;const ls=q.lines.map(l=>lnCopy(l));const over=overLines(ls);if(over.length)return toast('Pas assez de stock : '+over.map(l=>l.name).join(', '));
+    lvOpen({lines:ls,client:q.client||'',phone:q.phone||'',quote:q.id});}
+  else if(a==='cmdDevis'){if(!w())return;const c=WCMD.find(x=>String(x.id)===String(id));if(!c)return;const d=c.data||{};
+    draft=newDraft();Object.assign(draft,{lines:(d.lignes||[]).map(webLine),client:d.nom||'',phone:d.tel||'',fromWeb:c.id,showCli:true});tab='sell';closeSheet();render();scrollTo(0,0);toast('Mettez les vrais prix, puis « Faire un devis »');}
   else if(a==='lfZone'){lvRead();const i=+el.dataset.i;if(i<0){LF.zone='Retrait';LF.frais='0';}else{const z=S.fash.zones[i];LF.zone=z.n;LF.frais=String(z.p);}lvPaint();}
   else if(a==='lfSrc'){lvRead();LF.src=el.dataset.v;lvPaint();}
   else if(a==='lfPay'){lvRead();LF.pay=el.dataset.v;if(LF.pay==='avant'&&LF.payWith==='Espèces')LF.payWith='Wave';lvPaint();}
@@ -1967,8 +1979,8 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if
     L2.lines.forEach(l=>{const p=l.pid&&prod(l.pid);if(p)l.cost=(p.cost||0)*lnPk(l);lnMove(l,-1);});
     S.seq.liv=(S.seq.liv||0)+1;
     const v={id:uid(),no:S.seq.liv,date:nowStamp(),client:L2.client.trim(),phone:String(L2.phone).trim(),adr:L2.adr.trim(),zone:L2.zone,frais:Math.max(0,num(L2.frais)),src:L2.src,
-      lines:L2.lines.map(lnCopy),pay:L2.pay,payWith:L2.payWith,acompte:L2.pay==='avant'?0:Math.max(0,num(L2.acompte)),note:L2.note.trim(),st:'prep',web:L2.web||null};
-    S.livs.push(v);if(L2.from==='cart')draft=null;if(L2.web)webCmdSet(L2.web,'vendu');
+      lines:L2.lines.map(lnCopy),pay:L2.pay,payWith:L2.payWith,acompte:L2.pay==='avant'?0:Math.max(0,num(L2.acompte)),note:L2.note.trim(),dateL:L2.dateL||'',st:'prep',web:L2.web||null};
+    S.livs.push(v);if(L2.from==='cart')draft=null;if(L2.quote){const q=S.quotes.find(x=>x.id===L2.quote);if(q)q.status='vendu';}if(L2.web)webCmdSet(L2.web,'vendu');
     LF=null;LVF='cours';save();closeSheet();tab='liv';render();scrollTo(0,0);toast('Commande N° '+v.no+' enregistrée · envoyez la confirmation sur WhatsApp');}
   else if(a==='lvF'){LVF=el.dataset.v;render();}
   else if(a==='lvGo'&&L){if(!w())return;L.st='route';save();render();toast('En route 🛵');}
@@ -1994,6 +2006,9 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if
 function fzRead(){const ns=document.querySelectorAll('[data-fzn]');if(!ns.length)return;const F2=fashDef();ns.forEach(i=>{const z=F2.zones[+i.dataset.fzn];if(z)z.n=clean(i.value).slice(0,24);});
   document.querySelectorAll('[data-fzp]').forEach(i=>{const z=F2.zones[+i.dataset.fzp];if(z)z.p=Math.max(0,Math.round(num(i.value)));});}
 function fashCard(){const on=fashOn();const Z=on?fashDef().zones:[];
+  if(btype()!=='tout'){if(!on)return '';return '<h3>Zones de livraison</h3><div class="card stack"><div class="small">Le prix se met tout seul dans les commandes. Il s\'affiche aussi sur votre boutique en ligne.</div>'+
+     Z.map((z,i)=>'<div class="grid2" style="grid-template-columns:1fr 110px 44px;align-items:end"><label class="f">Zone<input data-fzn="'+i+'" value="'+esc(z.n)+'" placeholder="Ex : Dakar"></label><label class="f">Prix (F)<input data-fzp="'+i+'" inputmode="numeric" value="'+esc(z.p)+'"></label><button type="button" class="btn line sm" data-act="fzDel" data-i="'+i+'" aria-label="Enlever">×</button></div>').join('')+
+     '<div class="grid2"><button type="button" class="btn line" data-act="fzAdd">+ Zone</button><button type="button" class="btn" data-act="fzSave">Enregistrer</button></div></div>';}
   return '<h3>Boutique de mode et tissus</h3><div class="card stack"><div class="small">Pour les boutiques de vêtements, chaussures, sacs, tissus (bazin Getzner, brodé, wax…) : tailles ou qualités, couleurs, commandes à livrer avec zones, acompte et échange de taille.</div>'+
    '<div class="seg"><button class="segb" type="button" data-act="fzOn" data-v="0" aria-pressed="'+!on+'">Non</button><button class="segb" type="button" data-act="fzOn" data-v="1" aria-pressed="'+on+'">👗 Oui, activer</button></div>'+
    (on?'<b>Zones de livraison</b><div class="small">Le prix se met tout seul dans les commandes. Il s\'affiche aussi sur votre boutique en ligne.</div>'+
@@ -2003,9 +2018,9 @@ function fashCard(){const on=fashOn();const Z=on?fashDef().zones:[];
     :'<div class="small">Désactivé : Carnet Boutique reste exactement comme avant.</div>')+'</div>';}
 // Accueil : les livraisons en cours
 {const _h=vHome;vHome=function(){const x=_h.apply(this,arguments);if(!fashOn())return x;const a=lvActive();if(!a.length)return x;
-  return '<button class="banner warn" data-tab="liv" style="width:100%;border:0;text-align:left;cursor:pointer;margin-bottom:12px;font:inherit"><b>🛵 '+a.length+' commande'+(a.length>1?'s':'')+' à livrer</b><span>À encaisser : '+F(a.reduce((s,v)=>s+lvReste(v),0))+' · Voir les livraisons</span></button>'+x;};}
+  return '<button class="banner warn" data-tab="liv" style="width:100%;border:0;text-align:left;cursor:pointer;margin-bottom:12px;font:inherit"><b>'+(isArt()?'🛠 '+a.length+' commande'+(a.length>1?'s':'')+' en cours':'🛵 '+a.length+' commande'+(a.length>1?'s':'')+' à livrer')+'</b><span>À encaisser : '+F(a.reduce((s,v)=>s+lvReste(v),0))+' · Voir les livraisons</span></button>'+x;};}
 // Facture : bouton « Échange de taille »
-{const _sd=showDoc;showDoc=function(kind,s){_sd.apply(this,arguments);if(kind!=='s'||!s||!s.lines.some(l=>lnHasV(l)&&hasVar(prod(l.pid))))return;const z=$('delZone');if(!z)return;
+{const _sd=showDoc;showDoc=function(kind,s){_sd.apply(this,arguments);if(kind==='q'&&s&&s.status!=='vendu'&&fashOn()){const z=$('delZone');if(z){const d=document.createElement('div');d.innerHTML='<button class="btn" data-act="lvQuote" data-id="'+s.id+'">'+(isArt()?'🛠 Le client accepte : commande avec acompte':'🛵 Le client accepte : commande à livrer')+'</button>';z.parentNode.insertBefore(d.firstChild,z.previousSibling||z);}}if(kind!=='s'||!s||!s.lines.some(l=>lnHasV(l)&&hasVar(prod(l.pid))))return;const z=$('delZone');if(!z)return;
   const d=document.createElement('div');d.innerHTML='<button class="btn line" data-act="saleSwap" data-id="'+s.id+'">↔ Échange de taille / couleur</button>';z.parentNode.insertBefore(d.firstChild,z);};}
 
 // Couleurs de l'écran : auto (comme le téléphone), clair ou sombre
@@ -2014,9 +2029,86 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]
   try{if(k==='auto')localStorage.removeItem('carnetBoutique.theme');else localStorage.setItem('carnetBoutique.theme',k);}catch(x){}
   const m=document.querySelector('meta[name="theme-color"]');render();toast(k==='dark'?'🌙 Mode sombre':k==='light'?'☀️ Mode clair':'Couleurs comme le téléphone');});
 
+/* ======================================================================
+   TYPE DE BOUTIQUE : chacun ne voit que ce qui lui sert.
+   Les comptes existants restent sur « tout » : rien ne change pour eux.
+   ====================================================================== */
+const BTY={
+  alim:{e:'🛒',n:'Alimentation / boutique de quartier',d:'Riz, huile, sucre, savon… Carton, prix gros, péremption, code-barres.'},
+  quinc:{e:'🔩',n:'Quincaillerie / matériaux',d:'Ciment, fer, peinture… Au sac, au mètre, au kg, devis, fournisseurs.'},
+  mode:{e:'👗',n:'Mode, chaussures, tissus',d:'Tailles, couleurs, tissus au mètre, commandes à livrer.'},
+  cosm:{e:'💄',n:'Cosmétiques / parfums',d:'Péremption, boutique en ligne, commandes à livrer.'},
+  art:{e:'🛠',n:'Artisan / sur commande',d:'Menuisier, décorateur… Vos réalisations en vitrine, devis, commandes avec acompte. Pas de stock.'},
+  tout:{e:'📦',n:'Autre / toutes les fonctions',d:'Tout Carnet Boutique, comme avant.'}};
+const BT_ORDER=['alim','quinc','mode','cosm','art','tout'];
+const btype=()=>(S&&BTY[S.btype])?S.btype:'tout';
+const isArt=()=>btype()==='art';
+const varOn=()=>btype()==='mode'||(btype()==='tout'&&!!(S&&S.fash&&S.fash.on));
+const FEAT={carton:['alim','quinc','cosm','tout'],gros:['alim','quinc','cosm','tout'],exp:['alim','cosm','tout'],code:['alim','quinc','mode','cosm','tout'],stock:['alim','quinc','mode','cosm','tout'],unit:['alim','quinc','mode','tout']};
+const feat=k=>FEAT[k].includes(btype());
+function setType(t){if(!BTY[t])return;S.btype=t;const F2=fashDef();if(t!=='tout')F2.on=['mode','cosm','art'].includes(t);if(t==='art'){webDef().stock=false;}save();}
+function btPicker(cur,attr){return '<div class="btlist">'+BT_ORDER.map(k=>'<button type="button" class="btc" '+attr+'="'+k+'" aria-pressed="'+(cur===k)+'"><span class="bte">'+BTY[k].e+'</span><span><b>'+BTY[k].n+'</b><small>'+BTY[k].d+'</small></span></button>').join('')+'</div>';}
+function btCard(){return '<h3>Type de boutique</h3><div class="card stack"><div class="small">Vous voyez seulement ce qui sert à votre type de boutique. Vous pouvez changer quand vous voulez : vos ventes, articles et crédits restent.</div>'+btPicker(btype(),'data-bt-set')+'</div>';}
+// Réglages : changer le type
+document.addEventListener('click',e=>{const b=e.target.closest('[data-bt-set]');if(!b||!S)return;if(!w())return;const t=b.dataset.btSet;if(t===btype())return;
+  setType(t);render();toast(BTY[t].e+' '+BTY[t].n);});
+// Inscription : choisir le type avant de commencer
+let ONB_T='';
+document.addEventListener('click',e=>{const b=e.target.closest('[data-bt-onb]');if(!b)return;ONB_T=b.dataset.btOnb;document.querySelectorAll('[data-bt-onb]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
+document.addEventListener('submit',e=>{if(e.target.id!=='fOn')return;if(!ONB_T){e.preventDefault();e.stopImmediatePropagation();const l=$('btOnb');if(l)l.scrollIntoView({block:'center'});toast('Choisissez le type de votre boutique');}},true);
+{const _st=start;start=function(shop,demo,days){_st.apply(this,arguments);if(S&&!demo&&ONB_T){setType(ONB_T);ONB_T='';render();}};}
+{const _ob=onboard;onboard=function(){const x=_ob.apply(this,arguments);
+  return x.replace('<button class="btn" type="submit">','<div class="f" id="btOnb" style="gap:8px"><span>Votre boutique vend quoi ?</span>'+btPicker(ONB_T,'data-bt-onb')+'</div><button class="btn" type="submit">');};}
+
+/* ---------- Exemple sans compte : choisir le type d'abord ---------- */
+function demoPick(){openSheet('Quel type de boutique ?','<div class="small" style="margin-bottom:10px">Choisissez pour voir l\'exemple qui vous ressemble.</div>'+btPicker('','data-bt-demo'));}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-bt-demo]');if(!b)return;const t=b.dataset.btDemo;closeSheet();
+  XDEMO=true;start({name:t==='mode'?'Awa Fashion (exemple)':t==='art'?'Menuiserie Diallo (exemple)':'Boutique Exemple',owner:'Moustapha',phone:'77 000 00 00',address:'Dakar'},true,30);
+  setType(t);demoData(t);tab='home';render();scrollTo(0,0);toast('Exemple : essayez tout, rien n\'est enregistré');},true);
+function demoData(t){const d=todayISO();
+  if(t==='mode'){S.products=[
+    {id:uid(),name:'Robe longue satin',unit:'pièce',cost:9000,price:15000,priceGros:0,qty:0,min:2,code:'',exp:'',pack:0,fav:true,added:d,vk:'taille',var:[{t:'S',c:'Noir',q:2},{t:'S',c:'Rouge',q:1},{t:'M',c:'Noir',q:3},{t:'M',c:'Rouge',q:0},{t:'L',c:'Noir',q:1},{t:'L',c:'Rouge',q:2}]},
+    {id:uid(),name:'Escarpins',unit:'pièce',cost:11000,price:18000,priceGros:0,qty:0,min:2,code:'',exp:'',pack:0,fav:true,added:d,vk:'taille',var:[{t:'37',c:'Noir',q:1},{t:'38',c:'Noir',q:2},{t:'38',c:'Beige',q:1},{t:'39',c:'Beige',q:2},{t:'40',c:'Noir',q:0}]},
+    {id:uid(),name:'Sac à main cuir',unit:'pièce',cost:14000,price:22000,priceGros:0,qty:0,min:1,code:'',exp:'',pack:0,fav:true,added:d,vk:'taille',var:[{t:'Unique',c:'Noir',q:3},{t:'Unique',c:'Marron',q:1}]},
+    {id:uid(),name:'Bazin Getzner',unit:'m',cost:2500,price:3500,priceGros:0,qty:0,min:5,code:'',exp:'',pack:10,pricePk:32000,fav:false,added:d,vk:'qualite',var:[{t:'Getzner',c:'Blanc',q:30},{t:'Getzner',c:'Bleu',q:12},{t:'Riche',c:'Jaune',q:20}]}];
+    S.products.forEach(varSync);S.sales=[];S.quotes=[];S.purchases=[];S.clients=[];S.payments=[];S.seq={sale:0,quote:0};}
+  if(t==='art'){S.products=[
+    {id:uid(),name:'Armoire 3 portes',unit:'pièce',cost:0,price:250000,priceGros:0,qty:0,min:0,code:'',exp:'',pack:0,fav:true,added:d,desc:'Bois massif, sur mesure.'},
+    {id:uid(),name:'Lit 2 places avec tête de lit',unit:'pièce',cost:0,price:180000,priceGros:0,qty:0,min:0,code:'',exp:'',pack:0,fav:true,added:d},
+    {id:uid(),name:'Faux plafond (le m²)',unit:'m²',cost:0,price:9000,priceGros:0,qty:0,min:0,code:'',exp:'',pack:0,fav:true,added:d},
+    {id:uid(),name:'Rideaux salon',unit:'pièce',cost:0,price:45000,priceGros:0,qty:0,min:0,code:'',exp:'',pack:0,fav:false,added:d}];
+    S.sales=[];S.purchases=[];S.payments=[];S.clients=[];S.seq={sale:0,quote:1,liv:1};
+    S.quotes=[{id:uid(),no:1,date:d+'T09:00',client:'Fatou Sow',phone:'771234567',lines:[{pid:S.products[0].id,name:'Armoire 3 portes',unit:'pièce',qty:1,price:250000}],total:250000,status:'ouvert'}];
+    S.livs=[{id:uid(),no:1,date:d+'T10:00',client:'Modou Fall',phone:'781112233',adr:'Mermoz',zone:'',frais:0,src:'WhatsApp',lines:[{pid:S.products[1].id,name:'Lit 2 places avec tête de lit',unit:'pièce',qty:1,price:180000,cost:0}],pay:'livraison',payWith:'Espèces',acompte:90000,note:'',st:'prep',dateL:addDays(d,7)}];}
+  writeLocal();}
+
+/* ---------- Ce qu'on cache selon le type ---------- */
+function prodGate(){if(btype()==='tout')return;const hide=el=>{if(el)el.hidden=true;};const lab=id=>{const e=$(id);return e&&e.closest('label');};
+  if(!feat('code'))hide(lab('prCode'));
+  if(!feat('stock')){hide(lab('prQty'));hide(lab('prMin'));const pp=lab('prPrice');if(pp&&pp.firstChild&&pp.firstChild.nodeType===3)pp.firstChild.textContent='Prix (à partir de, F)';}
+  if(!feat('carton')||!feat('stock')){const sg=document.querySelector('[data-act="buyMode"]');hide(sg&&sg.closest('.f'));hide($('buyC'));hide($('buyC2'));}
+  if(!feat('stock')){hide($('buyP'));hide($('prGain'));}
+  if(!feat('gros'))hide(lab('prGros'));
+  if(!feat('exp'))hide(lab('prExp'));
+  if(!feat('unit')&&!isArt())hide(lab('prUnit'));}
+function domGate(){if(!S||btype()==='tout')return;const app=$('app');if(!app)return;
+  const hideTxt=(sel,txt)=>app.querySelectorAll(sel).forEach(e=>{if(e.textContent.trim().startsWith(txt))e.hidden=true;});
+  if(!feat('exp'))hideTxt('.banner','Dates de péremption');
+  if(isArt()){app.querySelectorAll('[data-act="restock"]').forEach(e=>e.hidden=true);hideTxt('.stat','À racheter');
+    const tb=app.querySelector('nav.tabs [data-tab="stock"]');if(tb&&tb.lastChild&&tb.lastChild.nodeType===3)tb.lastChild.textContent='Articles';}}
+{const _r3=render;render=function(){const x=_r3.apply(this,arguments);try{domGate();}catch(e){}return x;};}
+// Artisan : la page « Stock » devient « Mes réalisations » (pas de quantités)
+{const _vs=vStock;vStock=function(){if(!isArt())return _vs.apply(this,arguments);const q=stockQ.trim().toLowerCase();
+  const ps=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+  return '<h2>Mes réalisations</h2><div class="small" style="margin-bottom:10px">Ce que vous fabriquez ou posez, avec une photo et un prix « à partir de ». Mettez-les en ligne pour que les clients demandent un devis.</div>'+
+   '<div class="grid2"><button class="btn" data-act="prod" data-id="">+ Réalisation</button><button class="btn ghost" data-tab="web">🌐 Ma vitrine</button></div>'+
+   (S.products.length>6?'<div style="margin-top:10px"><input id="stockQ" type="search" placeholder="Chercher" value="'+esc(stockQ)+'" autocomplete="off"></div>':'')+
+   '<h3>Articles</h3>'+(ps.length?'<div class="list">'+ps.map(p=>'<button class="row" data-act="prod" data-id="'+p.id+'">'+thumb(p)+'<div class="main"><div class="t">'+esc(p.name)+(p.web?'<span class="tag g">en ligne</span>':'')+'</div><div class="s">à partir de '+F(p.price)+(p.unit&&p.unit!=='pièce'?' / '+esc(p.unit):'')+'</div></div></button>').join('')+'</div>'
+     :'<div class="list"><div class="empty">Ajoutez vos réalisations : armoire, lit, porte, faux plafond, rideaux…</div></div>');};}
+
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
-  if(b.dataset.xdemo==='1'){XDEMO=true;start({name:'Boutique Exemple',owner:'Moustapha',phone:'77 000 00 00',address:'Touba'},true,30);scrollTo(0,0);toast('Exemple : essayez tout, rien n\'est enregistré');}
+  if(b.dataset.xdemo==='1'){demoPick();}
   else{XDEMO=false;S=null;draft=null;AUTH_MODE='signup';closeSheet();render();scrollTo(0,0);}});
 {const _r2=render;render=function(){const x=_r2.apply(this,arguments);if(XDEMO&&S){const a=$('app'),w0=a&&a.querySelector('.wrap');if(w0&&!$('xdemoBar')){const d=document.createElement('div');d.id='xdemoBar';d.className='banner warn';d.style.margin='8px 0 0';
   d.innerHTML='<b>👀 Boutique d\'exemple : rien n\'est enregistré</b><button class="btn" type="button" data-xdemo="0">Créer mon compte</button>';w0.insertBefore(d,w0.children[1]||null);}}return x;};}

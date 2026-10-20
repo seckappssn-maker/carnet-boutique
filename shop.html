@@ -216,6 +216,7 @@ const hasV=a=>!!(a&&Array.isArray(a.var)&&a.var.length);
 const vq=(a,t,c)=>{const v=a.var.find(x=>x.t===t&&x.c===c);return v?(v.q===null||v.q===undefined?99:Math.floor(v.q)):0;};
 const COLS={noir:'#111',blanc:'#fff',rouge:'#D32F2F',bleu:'#1E5BC6',vert:'#2E7D32',jaune:'#F5C518',rose:'#F48FB1',beige:'#D9C2A0',marron:'#7B4A2A',gris:'#9E9E9E','doré':'#D4AF37',argent:'#C0C0C0',bordeaux:'#7B1E2E',orange:'#F57C00',violet:'#7B3FA0',kaki:'#7C7B4A',turquoise:'#1BB1B1'};
 const cdot=c=>{const h=COLS[String(c||'').toLowerCase().split(/\s+/)[0]];return h?'<span class="vdot" style="background:'+h+'"></span>':'';};
+const ART=()=>!!(D&&D.type==='art');
 const zoneOf=()=>(D.zones||[]).find(z=>z.n===ZONE);
 const frais=()=>mode==='livraison'&&zoneOf()?zoneOf().p:0;
 const $=id=>document.getElementById(id);
@@ -256,16 +257,16 @@ function card(a){const q=hasV(a)?qOf(a.id):(cart[a.id]||0),out=isOut(a);
   const badge=out?'<span class="badge b-out">'+t('Épuisé')+'</span>':a.old>a.prix?'<span class="badge b-promo">Promo</span>':(a.badge==='new'||a.nouveau)?'<span class="badge b-new">Nouveau</span>':'';
   return '<article class="card'+(out?' out':'')+'"><button class="pic" type="button" data-see="'+a.id+'" aria-label="Voir '+esc(a.nom)+'">'+pic(a)+badge+'</button>'+
    '<div class="cb"><h3>'+esc(a.nom)+'</h3>'+(a.desc?'<p class="desc">'+esc(a.desc)+'</p>':'')+
-   '<div class="pr"><span class="price">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
+   '<div class="pr">'+(ART()?'<span class="note">à partir de</span>':'')+'<span class="price">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
    (hasV(a)?(a.tailles?'<p class="desc">'+esc(a.tailles)+'</p>':'')+'<button class="add" type="button" data-see="'+a.id+'"'+(out?' disabled':'')+'>'+(out?t('Épuisé'):(q?'✓ '+q+' · ':'')+(a.vk==='qualite'?'Choisir':'Choisir la taille'))+'</button>':
     q?'<div class="step"><button type="button" data-m="'+a.id+'" aria-label="Enlever un">−</button><b>'+q+'</b><button type="button" data-p="'+a.id+'" aria-label="Ajouter un"'+(q>=maxQ(a)?' disabled':'')+'>+</button></div>'
-     :'<button class="add" type="button" data-p="'+a.id+'"'+(out?' disabled':'')+'>'+(out?t('Épuisé'):t('Ajouter'))+'</button>')+'</div></article>';}
+     :'<button class="add" type="button" data-p="'+a.id+'"'+(out?' disabled':'')+'>'+(out?t('Épuisé'):ART()?'Demander un devis':t('Ajouter'))+'</button>')+'</div></article>';}
 function list(){const q=Q.trim().toLowerCase();
   const as=D.articles.filter(a=>(CAT==='Tout'||a.cat===CAT)&&(!q||(a.nom+' '+(a.desc||'')).toLowerCase().includes(q)));
   if(!as.length){$('list').innerHTML='<p class="empty">Aucun article trouvé.</p>';return;}
   const groups={};as.forEach(a=>{(groups[a.cat||'Articles']=groups[a.cat||'Articles']||[]).push(a)});
   $('list').innerHTML=Object.entries(groups).map(([c,xs])=>'<section class="sec"><h2>'+esc(c)+'</h2><div class="grid">'+xs.map(card).join('')+'</div></section>').join('');}
-function bar(){const n=count();$('cartN').textContent=n;$('cartT').textContent=F(total());$('cartL').textContent=t('Ma commande');$('cartBtn').disabled=!n;}
+function bar(){const n=count();$('cartN').textContent=n;$('cartT').textContent=F(total());$('cartL').textContent=ART()?'Ma demande de devis':t('Ma commande');$('cartBtn').disabled=!n;}
 function all(){head();cats();list();bar();$('lang').textContent=LANG==='fr'?'Wolof':'Français';}
 
 /* ---------- Feuilles ---------- */
@@ -275,8 +276,8 @@ function see(id,i){const a=art(id);i=i||0;const out=isOut(a);
   open('<div class="sh"><h2>'+esc(a.nom)+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
    '<div class="big">'+pic(a,i)+'</div>'+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
    (a.desc?'<p>'+esc(a.desc)+'</p>':'')+
-   '<div class="pr"><span class="price" style="font-size:28px">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
-   (out?'<p class="err">'+t('Épuisé')+'</p>':hasV(a)?varBox(a):'<button class="send" type="button" data-p="'+a.id+'" data-close>'+t('Ajouter')+' · '+F(a.prix)+'</button>'));}
+   '<div class="pr">'+(ART()?'<span class="note">à partir de</span>':'')+'<span class="price" style="font-size:28px">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
+   (out?'<p class="err">'+t('Épuisé')+'</p>':hasV(a)?varBox(a):'<button class="send" type="button" data-p="'+a.id+'" data-close>'+(ART()?'Demander un devis':t('Ajouter')+' · '+F(a.prix))+'</button>'));}
 function varBox(a){if(!SV||SV.id!==a.id){SV={id:a.id,t:null,c:null};const ts=[...new Set(a.var.map(v=>v.t))],cs=[...new Set(a.var.map(v=>v.c))];if(ts.length===1)SV.t=ts[0];if(cs.length===1)SV.c=cs[0];}
   const ts=[...new Set(a.var.map(v=>v.t))],cs=[...new Set(a.var.map(v=>v.c))],hasC=cs.some(Boolean);
   const left=(t,c)=>vq(a,t,c)-(cart[ck(a.id,t,c)]||0);const leftT=t=>cs.reduce((s,c)=>s+Math.max(0,left(t,c)),0);
@@ -288,24 +289,25 @@ function varBox(a){if(!SV||SV.id!==a.id){SV={id:a.id,t:null,c:null};const ts=[..
 function showCart(err){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
   if(!ls.length){open('<div class="sh"><h2>'+t('Ma commande')+'</h2><button class="x" type="button" data-close>×</button></div><p class="empty">'+t('Votre panier est vide.')+'</p>');return;}
   const opts=[];if(D.livraison)opts.push(['livraison',t('Livraison')]);if(D.retrait)opts.push(['retrait','Je passe récupérer']);if(!opts.find(o=>o[0]===mode))mode=opts[0][0];
-  open('<div class="sh"><h2>'+t('Ma commande')+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
+  open('<div class="sh"><h2>'+(ART()?'Demande de devis':t('Ma commande'))+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
+   (ART()?'<p class="note">Les prix sont « à partir de ». Le vendeur vous envoie le vrai prix (devis) sur WhatsApp.</p>':'')+
    ls.map(([id,q])=>{const a=art(id);return '<div class="line"><div><div class="nm">'+esc(lname(id))+'</div><div class="sm">'+F(a.prix)+' × '+q+' = '+F(a.prix*q)+'</div></div><div class="step"><button type="button" data-m="'+esc(id)+'" data-in>−</button><b>'+q+'</b><button type="button" data-p="'+esc(id)+'" data-in'+(q>=maxK(id)?' disabled':'')+'>+</button></div></div>'}).join('')+
    (opts.length>1?'<div class="seg">'+opts.map(o=>'<button type="button" data-mode="'+o[0]+'" aria-pressed="'+(o[0]===mode)+'">'+esc(o[1])+'</button>').join('')+'</div>':'')+
    (mode==='livraison'&&(D.zones||[]).length?'<div class="ftitle">Zone de livraison</div><div class="vch">'+D.zones.map(z=>'<button type="button" class="vc" data-zone="'+esc(z.n)+'" aria-pressed="'+(z.n===ZONE)+'">'+esc(z.n)+' · '+F(z.p)+'</button>').join('')+'</div>':'')+
    (frais()?'<div class="line" style="border:0;padding:0"><span class="sm">Livraison ('+esc(ZONE)+')</span><span class="sm">'+F(frais())+'</span></div>':'')+
-   '<div class="tot"><span>'+t('Total')+'</span><span>'+F(total()+frais())+'</span></div>'+
+   '<div class="tot"><span>'+(ART()?'Environ':t('Total'))+'</span><span>'+F(total()+frais())+'</span></div>'+
    '<label class="f">'+t('Votre nom')+'<input id="cNom" autocomplete="name" value="'+esc(window._nom||'')+'"></label>'+
    '<label class="f">'+t('Votre téléphone')+'<input id="cTel" type="tel" inputmode="tel" autocomplete="tel" placeholder="77 000 00 00" value="'+esc(window._tel||'')+'"></label>'+
    (mode==='livraison'?'<label class="f">'+t('Adresse ou repère')+'<input id="cAdr" placeholder="Ex : Parcelles U17, près de la pharmacie" value="'+esc(window._adr||'')+'"></label>':'')+
-   ((D.paiements||[]).length?'<div class="ftitle">Paiement</div><div class="seg'+(D.paiements.length>2?' three':'')+'">'+D.paiements.map(p=>'<button type="button" data-pay="'+esc(p)+'" aria-pressed="'+(p===pay)+'">'+esc(p)+'</button>').join('')+'</div>':'')+
-   '<label class="f">Note <span class="note">(taille, couleur…)</span><textarea id="cNote" rows="2">'+esc(window._note||'')+'</textarea></label>'+
+   ((D.paiements||[]).length&&!ART()?'<div class="ftitle">Paiement</div><div class="seg'+(D.paiements.length>2?' three':'')+'">'+D.paiements.map(p=>'<button type="button" data-pay="'+esc(p)+'" aria-pressed="'+(p===pay)+'">'+esc(p)+'</button>').join('')+'</div>':'')+
+   '<label class="f">Note <span class="note">'+(ART()?'(dimensions, couleur, bois…)':'(taille, couleur…)')+'</span><textarea id="cNote" rows="2">'+esc(window._note||'')+'</textarea></label>'+
    (err?'<p class="err">'+esc(err)+'</p>':'')+
-   '<button class="send" type="button" id="sendWa">'+t('Envoyer ma commande sur WhatsApp')+'</button>'+
+   '<button class="send" type="button" id="sendWa">'+(ART()?'Envoyer ma demande sur WhatsApp':t('Envoyer ma commande sur WhatsApp'))+'</button>'+
    '<p class="note">Le vendeur reçoit votre commande sur WhatsApp et vous répond pour confirmer. Les prix sont ceux de la boutique.</p>');}
 function keep(){if($('cNom'))window._nom=$('cNom').value;if($('cTel'))window._tel=$('cTel').value;if($('cAdr'))window._adr=$('cAdr').value;if($('cNote'))window._note=$('cNote').value;}
 function message(no){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
-  return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', je veux commander'+(no?' (commande N° '+no+')':'')+' :\n'+ls.map(([id,q])=>'• '+q+' × '+lname(id)+' = '+F(art(id).prix*q)).join('\n')+
-   (frais()?'\nLivraison ('+ZONE+') : '+F(frais()):'')+'\nTotal : '+F(total()+frais())+'\n\nNom : '+(window._nom||'').trim()+'\nTél : '+(window._tel||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(ZONE?ZONE+', ':'')+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
+  return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', '+(ART()?'je voudrais un devis':'je veux commander')+(no?' ('+(ART()?'demande':'commande')+' N° '+no+')':'')+' :\n'+ls.map(([id,q])=>'• '+q+' × '+lname(id)+' = '+F(art(id).prix*q)).join('\n')+
+   (frais()?'\nLivraison ('+ZONE+') : '+F(frais()):'')+'\n'+(ART()?'Prix indicatif : ':'Total : ')+F(total()+frais())+'\n\nNom : '+(window._nom||'').trim()+'\nTél : '+(window._tel||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(ZONE?ZONE+', ':'')+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
 let SENDING=false;
 async function send(){if(SENDING)return;keep();if(!(window._nom||'').trim())return showCart(t('Écrivez votre nom.'));
   if(String(window._tel||'').replace(/\D/g,'').length<9)return showCart('Écrivez votre numéro de téléphone.');
@@ -373,7 +375,7 @@ async function boot(){
     clearTimeout(to);const j=await r.json();
     if(!r.ok||!j||!j.ok){if(j&&j.raison==='introuvable')return closed(t('Lien introuvable.'),'Vérifiez le lien reçu, ou demandez-le de nouveau au vendeur.');
       return closed('Boutique fermée pour le moment','Cette boutique en ligne n\'est pas disponible pour le moment. Contactez directement le vendeur.');}
-    D={nom:j.nom||'Boutique',texte:j.texte||'',adresse:j.adresse||'',whatsapp:j.whatsapp||'',livraison:j.livraison!==false,retrait:j.retrait!==false,
+    D={type:j.type||'tout',nom:j.nom||'Boutique',texte:j.texte||'',adresse:j.adresse||'',whatsapp:j.whatsapp||'',livraison:j.livraison!==false,retrait:j.retrait!==false,
        paiements:Array.isArray(j.paiements)?j.paiements:[],
        articles:(Array.isArray(j.articles)?j.articles:[]).filter(a=>a&&a.nom&&a.prix>0).map(a=>({id:String(a.id),nom:a.nom,cat:a.cat||'Articles',prix:+a.prix,old:+a.old||0,desc:a.desc||'',
          stock:a.stock===null||a.stock===undefined?null:+a.stock,nouveau:!!a.nouveau,unite:a.unite||'',vk:a.vk||'',
