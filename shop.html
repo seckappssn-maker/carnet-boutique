@@ -138,6 +138,14 @@ label.f input,label.f textarea{border:1.5px solid var(--line);background:var(--b
 .thumbs svg{width:100%;height:100%;display:block}
 .msg{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:calc(var(--fs)*.9)}
 .note{color:var(--muted);font-size:calc(var(--fs)*.85)}
+.gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:640px){.gal{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.gi{position:relative;display:block;aspect-ratio:3/4;border:0;padding:0;border-radius:16px;overflow:hidden;background:var(--yellow-soft);cursor:pointer}
+.gi img,.gi svg{width:100%;height:100%;object-fit:cover;display:block}
+.gi .gp{position:absolute;left:0;right:0;bottom:0;padding:26px 10px 9px;background:linear-gradient(transparent,rgba(0,0,0,.72));color:#fff;text-align:left;display:flex;flex-direction:column;gap:1px}
+.gi .gp b{font-size:calc(var(--fs)*.95);line-height:1.2}.gi .gp span{font-size:calc(var(--fs)*.8);opacity:.92;font-weight:700}
+.gi .gn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;border-radius:99px;padding:3px 9px;font-size:12px;font-weight:800}
+.big.tall{aspect-ratio:3/4}
 .vch{display:flex;flex-wrap:wrap;gap:8px}
 .vc{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;font-weight:800;min-height:46px}
 .vc[aria-pressed="true"]{border-color:#0B6E5B;background:#0B6E5B;color:#fff}
@@ -302,7 +310,9 @@ function list(){const q=Q.trim().toLowerCase();
   const as=D.articles.filter(a=>(CAT==='Tout'||a.cat===CAT)&&(!q||(a.nom+' '+(a.desc||'')).toLowerCase().includes(q)));
   if(!as.length){$('list').innerHTML='<p class="empty">Aucun article trouvé.</p>';return;}
   const groups={};as.forEach(a=>{(groups[a.cat||'Articles']=groups[a.cat||'Articles']||[]).push(a)});
-  $('list').innerHTML=Object.entries(groups).map(([c,xs])=>'<section class="sec"><h2>'+esc(c)+'</h2><div class="grid">'+xs.map(card).join('')+'</div></section>').join('');}
+  $('list').innerHTML=Object.entries(groups).map(([c,xs])=>'<section class="sec"><h2>'+esc(c)+'</h2>'+(ART()?'<div class="gal">'+xs.map(galItem).join('')+'</div>':'<div class="grid">'+xs.map(card).join('')+'</div>')+'</section>').join('');}
+/* artisans : leurs réalisations en grandes photos ; on touche une photo pour la voir en grand et demander un devis */
+function galItem(a){const n=(a.img||[]).length;return '<button type="button" class="gi" data-see="'+a.id+'" aria-label="Voir '+esc(a.nom)+'">'+pic(a)+(n>1?'<span class="gn">'+n+' photos</span>':'')+'<span class="gp"><b>'+esc(a.nom)+'</b><span>à partir de '+F(a.prix)+'</span></span></button>';}
 function bar(){const n=count();$('cartN').textContent=n;$('cartT').textContent=F(total());$('cartL').textContent=ART()?'Ma demande de devis':t('Ma commande');$('cartBtn').disabled=!n;}
 function all(){head();cats();list();bar();$('lang').textContent=LANG==='fr'?'Wolof':'Français';}
 
@@ -311,7 +321,7 @@ function open(html){$('sheetRoot').innerHTML='<div class="shade" id="shade"><div
 function close(){$('sheetRoot').innerHTML='';}
 function see(id,i){const a=art(id);i=i||0;const out=isOut(a);
   open('<div class="sh"><h2>'+esc(a.nom)+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
-   '<div class="big">'+pic(a,i)+'</div>'+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
+   '<div class="big'+(ART()?' tall':'')+'">'+pic(a,i)+'</div>'+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
    (a.desc?'<p>'+esc(a.desc)+'</p>':'')+
    '<div class="pr">'+(ART()?'<span class="note">à partir de</span>':'')+'<span class="price" style="font-size:28px">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
    (out?'<p class="err">'+t('Épuisé')+'</p>':hasV(a)?varBox(a):'<button class="send" type="button" data-p="'+a.id+'" data-close>'+(ART()?'Demander un devis':t('Ajouter')+' · '+F(a.prix))+'</button>'));}
