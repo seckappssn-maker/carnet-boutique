@@ -317,6 +317,12 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
 .vgrid input{text-align:center;padding:9px 4px;min-width:0;width:100%}
 .vgrid .h{font-size:13px;font-weight:700;text-align:center;color:var(--muted);white-space:nowrap}
 .vfbox{margin:4px 0}
+.brandbtn{border:0;background:none;padding:0;color:inherit;text-align:left;cursor:pointer}
+.brandv{font-size:15px;opacity:.6}
+.actrow{border-top:1px solid var(--line);padding-top:8px}.actrow:first-child{border-top:0;padding-top:0}
+.actgo{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:6px 0}
+.actgo b{display:block;font-size:16px}.actgo small{display:block;color:var(--muted);font-size:13px}.actgo .bte{font-size:26px}
+.actrow.cur .actgo b{color:var(--accent)}
 .btlist{display:flex;flex-direction:column;gap:8px}
 .btc{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit;cursor:pointer}
 .btc b{display:block;font-size:16px}.btc small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.35}
@@ -523,13 +529,15 @@ function fdate(iso){if(!iso)return '—';const [y,m,d]=iso.slice(0,10).split('-'
 function nowStamp(){const d=new Date();return todayISO()+'T'+pad(d.getHours())+':'+pad(d.getMinutes());}
 
 // ===== Données =====
-const KEY=TEST?'carnetBoutique.test':'carnetBoutique.v1';
+let KEY=TEST?'carnetBoutique.test':'carnetBoutique.v1';const KEY0=KEY;let ACT='';
 // ===== Sauvegarde en ligne (Supabase) =====
 const SUPA_URL='https://ncsjgmkrsvtwklfrdbgy.supabase.co';
 const SUPA_KEY='sb_publishable_oDE4BbU6J3RTnce1Oo91cQ_hokWgh0U';
 const MAIL_DOM='@carnetboutique.app';
 let SB=null,USER=null,BOOTING=true,AUTH_MODE='login',syncSt='',pushing=false,pushT=null,retryT=null;
-const DIRTY=KEY+'.dirty';
+let DIRTY=KEY+'.dirty';
+const actKey=()=>'carnetBoutique.act.'+(USER?USER.id:'x');
+function setActLocal(id){ACT=id||'';KEY=KEY0+(ACT?'.'+ACT:'');DIRTY=KEY+'.dirty';try{if(USER){if(ACT)localStorage.setItem(actKey(),ACT);else localStorage.removeItem(actKey());}}catch(e){}}
 const isDirty=()=>{try{return localStorage.getItem(DIRTY)==='1';}catch(e){return false;}};
 const setDirty=v=>{if(XDEMO)return;try{v?localStorage.setItem(DIRTY,'1'):localStorage.removeItem(DIRTY);}catch(e){}};
 function phoneDigits(p){let d=String(p||'').replace(/\D/g,'');if(d.startsWith('00'))d=d.slice(2);if(d.length===9)d='221'+d;return d;}
@@ -540,26 +548,28 @@ function setSync(st){syncSt=st;const e=$('syncDot');if(e){e.className='sync '+st
 function syncLabel(){return syncSt==='ok'?'Sauvegardé en ligne':syncSt==='err'?'Pas encore envoyé : vérifiez internet':'Envoi en cours…';}
 function schedulePush(){if(!SB||!USER)return;clearTimeout(pushT);setSync('wait');pushT=setTimeout(push,1500);}
 async function push(){if(!SB||!USER||!S||pushing)return;if(!isDirty()){setSync('ok');return;}pushing=true;const at=S.savedAt||0;
-  try{const {error}=await SB.from('boutique_comptes').upsert({user_id:USER.id,phone:USER.email.split('@')[0],shop_name:(S.shop&&S.shop.name)||'',shop_id:(S.lic&&S.lic.id)||'',saved_at:at,data:S,updated_at:new Date().toISOString()});
+  try{const {error}=ACT?await SB.from('boutique_activites').update({nom:(S.shop&&S.shop.name)||'',btype:S.btype||'tout',saved_at:at,data:S,updated_at:new Date().toISOString()}).eq('id',ACT):await SB.from('boutique_comptes').upsert({user_id:USER.id,phone:USER.email.split('@')[0],shop_name:(S.shop&&S.shop.name)||'',shop_id:(S.lic&&S.lic.id)||'',saved_at:at,data:S,updated_at:new Date().toISOString()});
     if(error)throw error;if((S.savedAt||0)===at)setDirty(false);setSync('ok');}
   catch(e){setSync('err');clearTimeout(retryT);retryT=setTimeout(push,20000);}
   finally{pushing=false;if(isDirty()&&syncSt==='ok')schedulePush();}}
 async function cloudCheck(){if(!SB||!USER)return 'skip';
-  const r=await SB.from('boutique_comptes').select('saved_at').eq('user_id',USER.id).maybeSingle();if(r.error)throw r.error;
+  const r=await (ACT?SB.from('boutique_activites').select('saved_at,archive').eq('id',ACT):SB.from('boutique_comptes').select('saved_at').eq('user_id',USER.id)).maybeSingle();if(r.error)throw r.error;
+  if(ACT&&(!r.data||r.data.archive)){setActLocal('');S=load();return cloudCheck();}
   if(!r.data){if(S){S.uid=USER.id;setDirty(true);await push();}return 'empty';}
   const cAt=Number(r.data.saved_at)||0,lAt=(S&&S.savedAt)||0;
-  if(!S||S.uid!==USER.id||cAt>lAt){const d=await SB.from('boutique_comptes').select('data').eq('user_id',USER.id).single();if(d.error)throw d.error;
+  if(!S||S.uid!==USER.id||cAt>lAt){const d=await (ACT?SB.from('boutique_activites').select('data').eq('id',ACT):SB.from('boutique_comptes').select('data').eq('user_id',USER.id)).single();if(d.error)throw d.error;
+    if(!d.data.data){if(S){S.uid=USER.id;setDirty(true);await push();}return 'empty';}
     S=migrate(d.data.data);S.uid=USER.id;writeLocal();setDirty(false);setSync('ok');return 'down';}
   if(lAt>cAt){S.uid=USER.id;setDirty(true);await push();return 'up';}
   setDirty(false);setSync('ok');return 'same';}
-async function afterLogin(){const old=load();S=old&&old.uid&&old.uid!==USER.id?null:old;if(!S){try{localStorage.removeItem(KEY);}catch(e){}}
+async function afterLogin(){try{setActLocal(localStorage.getItem(actKey())||'');}catch(e){}const old=load();S=old&&old.uid&&old.uid!==USER.id?null:old;if(!S){try{localStorage.removeItem(KEY);}catch(e){}}
   try{await cloudCheck();}catch(e){setSync('err');}try{await fetchLic();}catch(e){}tab='home';render();}
 async function boot(){const t0=Date.now();while(!window.supabase&&Date.now()-t0<7000)await new Promise(r=>setTimeout(r,150));
   if(!window.supabase){BOOTING=false;S=load();render();return;}
   SB=window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'carnetBoutique.auth'}});
   try{const {data}=await SB.auth.getSession();USER=data&&data.session?data.session.user:null;}catch(e){USER=null;}if(!USER){try{const o=JSON.parse(localStorage.getItem('carnetBoutique.auth')||'null');if(o&&o.user&&o.user.id)USER=o.user;}catch(e){}}
   BOOTING=false;if(!USER){S=null;render();return;}
-  S=load();if(S&&S.uid&&S.uid!==USER.id)S=null;render();
+  try{setActLocal(localStorage.getItem(actKey())||'');}catch(e){}S=load();if(S&&S.uid&&S.uid!==USER.id)S=null;render();
   let ch=false;try{const r=await cloudCheck();if(r==='down')ch=true;}catch(e){setSync('err');}try{if(await fetchLic())ch=true;}catch(e){}if(ch)render();
   document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible'||!USER||isDirty())return;let ch=false;try{if(await cloudCheck()==='down'){ch=true;toast('Données mises à jour');}}catch(e){}try{if(await fetchLic())ch=true;}catch(e){}if(ch)render();});
   window.addEventListener('online',async()=>{try{await SB.auth.getSession();}catch(e){}if(isDirty())push();});}
@@ -582,7 +592,7 @@ async function doAuth(){const ph=phoneDigits(val('auPhone')),pw=val('auPass'),su
     say(/already|registered|exists/i.test(msg)?'Ce numéro a déjà un compte : appuyez sur « Se connecter »':/invalid login|credentials/i.test(msg)?'Numéro ou mot de passe faux':/fetch|network|Failed/i.test(msg)?'Pas de connexion internet : réessayez':msg);
     if(b){b.disabled=false;b.textContent=su?'Créer mon compte':'Se connecter';}}}
 async function doLogout(){if(isDirty()){await push();if(isDirty())return toast('Pas encore sauvegardé en ligne : connectez-vous à internet avant de vous déconnecter.');}
-  try{await SB.auth.signOut();}catch(e){}USER=null;S=null;draft=null;unlocked=false;try{localStorage.removeItem(KEY);}catch(e){}setDirty(false);closeSheet();tab='home';render();}
+  try{await SB.auth.signOut();}catch(e){}USER=null;S=null;draft=null;unlocked=false;try{Object.keys(localStorage).filter(k=>k.startsWith(KEY0)||k.startsWith('carnetBoutique.act.')).forEach(k=>localStorage.removeItem(k));}catch(e){}setActLocal('');ACTS=null;ACT_MAIN=null;setDirty(false);closeSheet();tab='home';render();}
 function accountCard(){if(!SB||!USER)return '';
   return '<h3>Compte en ligne</h3><div class="card stack"><div class="kv"><span>Connecté : '+esc(userPhone())+'</span></div><div class="small"><b id="syncTxt">'+syncLabel()+'</b></div><div class="small">Utilisez l\'app sur un seul téléphone à la fois.</div>'+
   '<label class="f">Nouveau mot de passe<input id="newPass" type="password" autocomplete="new-password" placeholder="6 caractères minimum"></label><button class="btn line" data-act="chgPass">Changer le mot de passe</button>'+
@@ -684,7 +694,7 @@ function render(){const app=$('app');if(BOOTING){app.innerHTML='<div class="wrap
   const L=licState();
   const chip=L.st==='blocked'?'<button class="chip bad" data-act="goSub">Abonnement expiré</button>':L.st==='grace'?'<button class="chip bad" data-act="goSub">Expiré · '+(GRACE_DAYS+L.left)+' j</button>':L.st==='warn'?'<button class="chip warn" data-act="goSub">'+(L.trial?'Essai':'Abonné')+' · '+L.left+' j</button>':'<button class="chip ok" data-act="goSub">'+(L.trial?'Essai gratuit':'Abonné')+'</button>';
   const V={home:vHome,sell:vSell,debt:vDebt,stock:vStock,more:vMore,quotes:vQuotes,sup:vSup,exp:vExp,report:vReport,set:vSet,web:vWeb,cmd:vCmd,liv:vLiv}[tab]||vHome;
-  app.innerHTML='<div class="wrap"><header class="top"><div class="brand">'+esc(S.shop.name)+'</div><div style="display:flex;gap:6px;align-items:center">'+(USER?'<span id="syncDot" class="sync '+syncSt+'">'+(syncSt==='ok'?'☁ ✓':syncSt==='err'?'☁ !':'☁ …')+'</span>':'')+webCmdBtn()+langBtn()+chip+'</div></header>'+banner(L)+V()+'</div>'+
+  app.innerHTML='<div class="wrap"><header class="top">'+(SB&&USER&&!XDEMO?'<button type="button" class="brand brandbtn" data-act="actOpen" aria-label="Mes activités">'+esc(S.shop.name)+((ACTS||[]).length?' <span class="brandv">▾</span>':'')+'</button>':'<div class="brand">'+esc(S.shop.name)+'</div>')+'<div style="display:flex;gap:6px;align-items:center">'+(USER?'<span id="syncDot" class="sync '+syncSt+'">'+(syncSt==='ok'?'☁ ✓':syncSt==='err'?'☁ !':'☁ …')+'</span>':'')+webCmdBtn()+langBtn()+chip+'</div></header>'+banner(L)+V()+'</div>'+
   '<nav class="tabs">'+TABS.map(([k,l])=>'<button data-tab="'+k+'" aria-current="'+(tab===k||(k==='more'&&MORE_TABS.includes(tab)))+'">'+svg(k)+l+'</button>').join('')+'</nav>';
   if(tab==='sell')renderResults();}
 function banner(L){
@@ -1516,10 +1526,10 @@ let WEBCODE=null,WEBCODE_ERR=false,WQ='';
 const webOn=()=>!!(S&&S.web&&S.web.on);
 function webDef(){S.web=Object.assign({on:false,nom:'',texte:'',adresse:'',wa:'',livraison:true,retrait:true,pay:['Wave','Orange Money','Espèces'],stock:true},S.web||{});return S.web;}
 function webUrl(){if(!WEBCODE)return '';const u=new URL('shop.html',location.href);u.search='?c='+WEBCODE;u.hash='';return u.href;}
-function webCodeKey(){return 'carnetBoutique.webcode.'+(USER?USER.id:'x');}
+function webCodeKey(){return 'carnetBoutique.webcode.'+(USER?USER.id:'x')+(ACT?'.'+ACT:'');}
 async function webLoadCode(){if(WEBCODE)return WEBCODE;try{WEBCODE=localStorage.getItem(webCodeKey())||null;}catch(e){}
   if(!SB||!USER){WEBCODE_ERR=!WEBCODE;return WEBCODE;}
-  try{const r=await SB.from('boutique_abonnements').select('page_code').eq('user_id',USER.id).maybeSingle();
+  try{const r=await (ACT?SB.from('boutique_activites').select('page_code').eq('id',ACT):SB.from('boutique_abonnements').select('page_code').eq('user_id',USER.id)).maybeSingle();
     if(r.error)throw r.error;if(r.data&&r.data.page_code){WEBCODE=r.data.page_code;WEBCODE_ERR=false;try{localStorage.setItem(webCodeKey(),WEBCODE);}catch(e){}}
     else WEBCODE_ERR=!WEBCODE;}catch(e){WEBCODE_ERR=!WEBCODE;}
   return WEBCODE;}
@@ -1667,7 +1677,7 @@ function webCmdBtn(){if(!webOn())return '';const n=WCMD.length;
   return '<button class="chip cmdchip'+(n?' hot':'')+'" data-tab="cmd" id="cmdBtn" aria-label="Commandes en ligne : '+n+'">🛒'+(n?' '+n:'')+'</button>';}
 function webCmdPaint(){const b=$('cmdBtn');if(b){b.outerHTML=webCmdBtn();}}
 async function webCmdLoad(force){if(!S||!webOn()||!SB||!USER)return;if(!force&&document.visibilityState==='hidden')return;
-  try{const r=await SB.from('boutique_commandes').select('id,data,statut,created_at').eq('user_id',USER.id).eq('statut','nouveau').order('created_at',{ascending:false}).limit(50);
+  try{const r=await SB.from('boutique_commandes').select('id,data,statut,created_at').eq('user_id',USER.id).eq('statut','nouveau')[ACT?'eq':'is']('activite',ACT||null).order('created_at',{ascending:false}).limit(50);
     if(r.error)throw r.error;const before=new Set(WCMD.map(c=>c.id));WCMD=r.data||[];
     const fresh=WCMD.filter(c=>!before.has(c.id));
     if(WCMD_SEEN!==null&&fresh.length){toast('🛒 Nouvelle commande en ligne : '+fresh[0].data.nom);try{navigator.vibrate&&navigator.vibrate([120,80,120]);}catch(e){}}
@@ -2105,6 +2115,74 @@ function domGate(){if(!S||btype()==='tout')return;const app=$('app');if(!app)ret
    (S.products.length>6?'<div style="margin-top:10px"><input id="stockQ" type="search" placeholder="Chercher" value="'+esc(stockQ)+'" autocomplete="off"></div>':'')+
    '<h3>Articles</h3>'+(ps.length?'<div class="list">'+ps.map(p=>'<button class="row" data-act="prod" data-id="'+p.id+'">'+thumb(p)+'<div class="main"><div class="t">'+esc(p.name)+(p.web?'<span class="tag g">en ligne</span>':'')+'</div><div class="s">à partir de '+F(p.price)+(p.unit&&p.unit!=='pièce'?' / '+esc(p.unit):'')+'</div></div></button>').join('')+'</div>'
      :'<div class="list"><div class="empty">Ajoutez vos réalisations : armoire, lit, porte, faux plafond, rideaux…</div></div>');};}
+
+/* ======================================================================
+   PLUSIEURS ACTIVITÉS (même numéro, même mot de passe)
+   L'activité principale reste comme avant (boutique_comptes).
+   Chaque activité en plus : ses articles, ventes, crédits et sa vitrine ;
+   +ACT_PRIX F par mois sur l'abonnement.
+   ====================================================================== */
+const ACT_PRIX=2500;
+let ACTS=null,ACT_MAIN=null,ACT_BUSY=false,ACT_NEW=null,ACT_ASK=null;
+const actOk=()=>!!(SB&&USER&&!XDEMO);
+async function actRefresh(){if(!actOk())return;try{
+  const [a,m]=await Promise.all([SB.from('boutique_activites').select('id,nom,btype,created_at').eq('user_id',USER.id).eq('archive',false).order('created_at'),
+    SB.from('boutique_comptes').select('shop_name,btype:data->>btype').eq('user_id',USER.id).maybeSingle()]);
+  if(!a.error)ACTS=a.data||[];if(!m.error)ACT_MAIN=m.data||{shop_name:'',btype:''};}catch(e){}}
+function actName(){if(!ACT)return (S&&S.shop&&S.shop.name)||'';const a=(ACTS||[]).find(x=>x.id===ACT);return a?a.nom:(S&&S.shop&&S.shop.name)||'';}
+function actRow(id,nom,bt,cur){const k=BTY[bt]?bt:'tout';
+  return '<div class="actrow'+(cur?' cur':'')+'"><button type="button" class="actgo" data-act="actGo" data-id="'+(id||'')+'"><span class="bte">'+BTY[k].e+'</span><span><b>'+esc(nom||'Sans nom')+'</b><small>'+(id?'Activité en plus · +'+F(ACT_PRIX)+' / mois':'Activité principale')+(cur?' · ouverte':'')+'</small></span></button>'+
+   (id?(ACT_ASK===id?'<div class="banner bad" style="margin-top:6px"><span>Supprimer « '+esc(nom)+' » ? Ses ventes et articles ne seront plus visibles et on ne paie plus pour elle.</span><div class="grid2"><button class="btn danger" data-act="actDel" data-id="'+id+'">Oui, supprimer</button><button class="btn line" data-act="actAskDel" data-id="">Non</button></div></div>':'<button type="button" class="back" style="margin:2px 0 0 46px" data-act="actAskDel" data-id="'+id+'">Supprimer</button>'):'')+'</div>';}
+function actSheet(){const list=ACTS||[];const n=list.length;
+  if(ACT_NEW){openSheet('Nouvelle activité','<div class="card stack"><label class="f">Nom de l\'activité<input id="actNom" value="'+esc(ACT_NEW.nom)+'" placeholder="Ex : Awa Fashion"></label>'+
+    '<div class="f" style="gap:8px"><span>Elle vend quoi ?</span>'+btPicker(ACT_NEW.bt,'data-bt-new')+'</div>'+
+    '<div class="banner warn"><b>+'+F(ACT_PRIX)+' par mois</b><span>Ajouté à votre abonnement. Total : '+F(num(PRIX_MOIS)+ACT_PRIX*(n+1))+' par mois.</span></div>'+
+    '<button class="btn" data-act="actCreate"'+(ACT_BUSY?' disabled':'')+'>'+(ACT_BUSY?'Création…':'Créer l\'activité')+'</button><button class="btn line" data-act="actBack">Retour</button></div>');return;}
+  openSheet('Mes activités','<div class="small" style="margin-bottom:10px">Chaque activité a ses articles, ses ventes, ses crédits et sa boutique en ligne. Même numéro, même mot de passe.</div>'+
+   (ACTS===null?'<div class="card"><div class="empty">Chargement…</div></div>':
+   '<div class="card stack">'+actRow('',ACT_MAIN&&ACT_MAIN.shop_name||(!ACT&&S.shop.name)||'Ma boutique',ACT_MAIN&&ACT_MAIN.btype||(!ACT&&S.btype)||'tout',!ACT)+list.map(a=>actRow(a.id,a.nom,a.btype,a.id===ACT)).join('')+'</div>'+
+   '<div class="small" style="margin:10px 0">Abonnement : '+esc(PRIX_MOIS)+(n?' + '+n+' × '+F(ACT_PRIX)+' = <b>'+F(num(PRIX_MOIS)+ACT_PRIX*n)+'</b>':'')+' par mois.</div>'+
+   (n<5?'<button class="btn" data-act="actNew">+ Ajouter une activité</button>':'<div class="small">5 activités en plus au maximum.</div>')));}
+async function actOpen(){if(!actOk())return;ACT_NEW=null;ACT_ASK=null;actSheet();await actRefresh();if($('sheetRoot').innerHTML)actSheet();}
+async function actSave(){if(!isDirty())return true;await push();return !isDirty();}
+async function actGo(id,quiet){if(ACT_BUSY)return;id=id||'';if(id===ACT){closeSheet();return;}ACT_BUSY=true;
+  try{if(!(await actSave())){toast('Pas encore sauvegardé en ligne : vérifiez internet, puis réessayez');return;}
+    const prev=ACT,prevS=S;setActLocal(id);WEBCODE=null;WEBCODE_ERR=false;WCMD=[];WCMD_SEEN=null;draft=null;LF=null;S=load();
+    try{await cloudCheck();}catch(e){}
+    if(!S){setActLocal(prev);S=prevS;toast('Pas de connexion internet : réessayez');render();return;}
+    try{await fetchLic();}catch(e){}closeSheet();tab='home';render();scrollTo(0,0);if(!quiet)toast((BTY[btype()]||BTY.tout).e+' '+S.shop.name);}
+  finally{ACT_BUSY=false;}}
+async function actCreate(){if(ACT_BUSY||!actOk())return;const nom=clean($('actNom')?$('actNom').value:'').slice(0,60)||'';ACT_NEW.nom=nom;
+  if(!nom)return toast('Écrivez le nom de l\'activité');if(!ACT_NEW.bt)return toast('Choisissez ce qu\'elle vend');
+  ACT_BUSY=true;actSheet();
+  try{if(!(await actSave()))throw new Error('net');
+    const r=await SB.from('boutique_activites').insert({user_id:USER.id,nom,btype:ACT_NEW.bt}).select('id').single();if(r.error)throw r.error;
+    const old=S.shop||{},bt=ACT_NEW.bt;setActLocal(r.data.id);WEBCODE=null;WEBCODE_ERR=false;WCMD=[];WCMD_SEEN=null;draft=null;S=null;ACT_NEW=null;
+    start({name:nom,owner:old.owner||'',phone:old.phone||'',address:old.address||'',footer:old.footer||''},false);setType(bt);
+    try{await fetchLic();}catch(e){}await actRefresh();closeSheet();render();scrollTo(0,0);toast('Activité créée : '+nom);}
+  catch(e){const m=String(e&&e.message||'');toast(/limite/.test(m)?'5 activités en plus au maximum':/net|fetch|Failed/i.test(m)?'Pas de connexion internet : réessayez':'Activité pas créée : réessayez');}
+  finally{ACT_BUSY=false;if(ACT_NEW)actSheet();}}
+async function actDel(id){if(ACT_BUSY||!actOk())return;ACT_BUSY=true;
+  try{const r=await SB.from('boutique_activites').update({archive:true}).eq('id',id);if(r.error)throw r.error;
+    try{localStorage.removeItem(KEY0+'.'+id);localStorage.removeItem(KEY0+'.'+id+'.dirty');}catch(e){}
+    ACT_ASK=null;await actRefresh();ACT_BUSY=false;if(ACT===id){await actGo('',true);toast('Activité supprimée');}else{actSheet();toast('Activité supprimée');}}
+  catch(e){toast('Pas de connexion internet : réessayez');}finally{ACT_BUSY=false;}}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act^="act"],[data-bt-new]');if(!el||!S)return;
+  if(el.dataset.btNew){if(!ACT_NEW)return;const n=$('actNom');if(n)ACT_NEW.nom=n.value;ACT_NEW.bt=el.dataset.btNew;actSheet();return;}
+  const a=el.dataset.act,id=el.dataset.id;
+  if(a==='actOpen')actOpen();
+  else if(a==='actGo')actGo(id);
+  else if(a==='actNew'){if(!w())return;ACT_NEW={nom:'',bt:''};actSheet();}
+  else if(a==='actBack'){ACT_NEW=null;actSheet();}
+  else if(a==='actCreate')actCreate();
+  else if(a==='actAskDel'){ACT_ASK=id||null;actSheet();}
+  else if(a==='actDel')actDel(id);});
+// Réglages : carte « Mes activités »
+{const _bc=btCard;btCard=function(){const x=_bc.apply(this,arguments);if(!actOk())return x;const n=(ACTS||[]).length;
+  return '<h3>Mes activités</h3><div class="card stack"><div class="small">Vous avez une autre activité (ex. une boutique et un magasin de vêtements) ? Ajoutez-la avec le même numéro : chacune a ses articles, ventes et crédits. <b>+'+F(ACT_PRIX)+' par mois</b> par activité en plus.</div>'+
+   (n?'<div class="small">Vous avez '+(n+1)+' activités. Abonnement : <b>'+F(num(PRIX_MOIS)+ACT_PRIX*n)+' par mois</b>.</div>':'')+'<button class="btn line" data-act="actOpen">🏪 Mes activités / en ajouter une</button></div>'+x;};}
+// au démarrage : la liste des activités (pour le nom en haut et les Réglages)
+setTimeout(()=>{actRefresh().then(()=>{if(S&&(tab==='set'))render();});},3000);
 
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
