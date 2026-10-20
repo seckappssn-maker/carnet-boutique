@@ -2079,9 +2079,13 @@ const FEAT={carton:['alim','quinc','cosm','phar','tout'],gros:['alim','quinc','c
 const feat=k=>FEAT[k].includes(btype());
 function setType(t){if(!BTY[t])return;S.btype=t;const F2=fashDef();if(t!=='tout')F2.on=['mode','cosm','art','phar'].includes(t);if(t==='art'){webDef().stock=false;}save();}
 function btPicker(cur,attr){return '<div class="btlist">'+BT_ORDER.map(k=>'<button type="button" class="btc" '+attr+'="'+k+'" aria-pressed="'+(cur===k)+'"><span class="bte">'+BTY[k].e+'</span><span><b>'+BTY[k].n+'</b><small>'+BTY[k].d+'</small></span></button>').join('')+'</div>';}
-function btCard(){return '<h3>Type de boutique</h3><div class="card stack"><div class="small">Vous voyez seulement ce qui sert à votre type de boutique. Vous pouvez changer quand vous voulez : vos ventes, articles et crédits restent.</div>'+btPicker(btype(),'data-bt-set')+'</div>';}
+let BT_OPEN=false;
+function btCard(){const k=btype();
+  if(!BT_OPEN)return '<h3>Type de boutique</h3><div class="card stack"><div class="btc" style="cursor:default" aria-pressed="true"><span class="bte">'+BTY[k].e+'</span><span><b>'+BTY[k].n+'</b><small>'+BTY[k].d+'</small></span></div><button type="button" class="btn line" data-act="btOpen">Changer de type</button></div>';
+  return '<h3>Type de boutique</h3><div class="card stack"><div class="small"><b>Attention :</b> chaque type montre seulement ses fonctions (par exemple, le scanner n\'existe pas en Mode, les tailles n\'existent pas en Alimentation). Vos ventes, articles et crédits restent toujours.</div>'+btPicker(k,'data-bt-set')+'<button type="button" class="btn line" data-act="btClose">Annuler, ne rien changer</button></div>';}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act="btOpen"],[data-act="btClose"]');if(!b||!S)return;BT_OPEN=b.dataset.act==='btOpen';render();});
 // Réglages : changer le type
-document.addEventListener('click',e=>{const b=e.target.closest('[data-bt-set]');if(!b||!S)return;if(!w())return;const t=b.dataset.btSet;if(t===btype())return;
+document.addEventListener('click',e=>{const b=e.target.closest('[data-bt-set]');if(!b||!S)return;if(!w())return;const t=b.dataset.btSet;if(t===btype()){BT_OPEN=false;render();return;}BT_OPEN=false;
   setType(t);render();toast(BTY[t].e+' '+BTY[t].n);});
 // Inscription : choisir le type avant de commencer
 let ONB_T='';
