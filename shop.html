@@ -55,8 +55,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .tools{display:flex;justify-content:flex-end;gap:8px}
 .tbtn{border:1.5px solid rgba(255,255,255,.7);background:transparent;color:#fff;border-radius:999px;padding:6px 14px;font-weight:800;font-size:14px}
 .id{display:flex;gap:14px;align-items:center}
-.logo{width:64px;height:64px;border-radius:18px;background:#FCEE45;color:#0B4A3E;display:grid;place-items:center;font:800 26px var(--display);flex:none;box-shadow:0 6px 16px rgba(0,0,0,.2);overflow:hidden}
-.logo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.logo{width:64px;height:64px;border-radius:50%;background:#FCEE45;color:#0B4A3E;display:grid;place-items:center;font:800 26px var(--display);flex:none;box-shadow:0 0 0 3px #fff,0 6px 18px rgba(0,0,0,.35);overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:cover;background:#fff}
+/* couverture : les photos en haut, le logo rond posé dessus */
+.hero.cov .vit{margin:0;padding:0;max-width:none;position:relative}
+.hero.cov .sdots{position:absolute;right:14px;bottom:10px;margin:0}.hero.cov .sdots i{background:rgba(255,255,255,.5);box-shadow:0 1px 3px rgba(0,0,0,.4)}.hero.cov .sdots i.on{background:#fff}
+.hero.cov .id{align-items:flex-end;padding-left:12px;margin-top:-4px}
+.hero.cov .logo{width:80px;height:80px;font-size:30px;position:relative;z-index:1;margin-top:-50px}
+.hero.cov .id h1{padding-bottom:2px}
 .vit{max-width:860px;margin:14px auto 0;padding-inline:16px}
 .slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:18px;scrollbar-width:none}.slides::-webkit-scrollbar{display:none}
 .slides img{flex:0 0 100%;width:100%;aspect-ratio:16/9;object-fit:cover;scroll-snap-align:center;background:#eee}
@@ -285,6 +291,7 @@ const total=()=>Object.entries(cart).reduce((s,[id,q])=>s+(art(id)?art(id).prix*
 const okImg=u=>typeof u==='string'&&/^(https:|data:image\/)/.test(u);
 let vitDone=false;
 function vitrine(){if(vitDone)return;vitDone=true;const ph=(Array.isArray(D.photos)?D.photos:[]).filter(okImg).slice(0,3),v=$('vit');if(!ph.length)return;
+  {const h=document.querySelector('.hero'),w=h.querySelector('.wrap');w.insertBefore(v,w.querySelector('.id'));h.classList.add('cov');}
   v.innerHTML='<div class="slides" id="slides">'+ph.map((u,i)=>'<img src="'+esc(u)+'" alt="Photo '+(i+1)+'"'+(i?' loading="lazy"':'')+'>').join('')+'</div>'+(ph.length>1?'<div class="sdots">'+ph.map((u,i)=>'<i class="'+(i?'':'on')+'"></i>').join('')+'</div>':'');
   v.hidden=false;if(ph.length<2)return;
   const sl=$('slides'),dots=[...v.querySelectorAll('.sdots i')];let cur=0,touched=0;
