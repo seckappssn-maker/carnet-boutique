@@ -954,8 +954,8 @@ function shrink(blob,max){return new Promise((ok,ko)=>{const u=URL.createObjectU
   im.onload=()=>{const k=Math.min(1,(max||260)/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);
     const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);try{ok(c.toDataURL('image/jpeg',0.72));}catch(e){ko(e);}};
   im.onerror=()=>{URL.revokeObjectURL(u);ko();};im.src=u;});}
-function prImgHTML(){return PIMG?'<img class="photo-prev" src="'+esc(PIMG)+'" alt=""><div class="grid2"><label class="btn sm ghost" style="width:100%">Changer la photo<input type="file" id="prPhoto" accept="image/*" capture="environment" hidden></label><button class="btn sm danger" style="width:100%" data-act="prImgDel">Enlever</button></div>'
-  :'<label class="btn ghost">📷 Prendre une photo du produit<input type="file" id="prPhoto" accept="image/*" capture="environment" hidden></label><div class="small">La photo aide à reconnaître l\'article dans le stock et à la vente.</div>';}
+function prImgHTML(){return PIMG?'<img class="photo-prev" src="'+esc(PIMG)+'" alt=""><div class="grid2" style="grid-template-columns:1fr 1fr 1fr"><label class="btn sm ghost" style="width:100%">📷 Photo<input type="file" id="prPhoto" accept="image/*" capture="environment" hidden></label><label class="btn sm ghost" style="width:100%">🖼 Galerie<input type="file" id="prPhotoG" accept="image/*" hidden></label><button class="btn sm danger" style="width:100%" data-act="prImgDel">Enlever</button></div>'
+  :'<div class="grid2"><label class="btn ghost">📷 Prendre une photo<input type="file" id="prPhoto" accept="image/*" capture="environment" hidden></label><label class="btn ghost">🖼 Galerie<input type="file" id="prPhotoG" accept="image/*" hidden></label></div><div class="small">La photo aide à reconnaître l\'article dans le stock et à la vente.</div>';}
 function updImgBox(){const b=$('prImgBox');if(b)b.innerHTML=prImgHTML();}
 async function lookupOFF(code){const msg=t=>{const e=$('offMsg');if(e){e.textContent=t;e.hidden=!t;}};
   if(!/^\d{8,14}$/.test(code)||navigator.onLine===false)return;msg('Recherche du produit sur internet…');
@@ -1351,7 +1351,7 @@ document.addEventListener('change',e=>{const t=e.target;
   if(t.hasAttribute&&t.hasAttribute('data-voice')){try{localStorage.setItem('carnetBoutique.voice',t.checked?'1':'0');}catch(x){}if(t.checked)speak('Voix activée.',true);}
   if(t.id==='rsAuto'&&RS)RS.auto=t.checked;
   if(t.id==='prUnit')updGain();
-  if(t.id==='prPhoto'&&t.files[0]){shrink(t.files[0],260).then(d=>{PIMG=d;updImgBox();}).catch(()=>toast('Photo illisible, réessayez'));}
+  if((t.id==='prPhoto'||t.id==='prPhotoG')&&t.files[0]){shrink(t.files[0],260).then(d=>{PIMG=d;updImgBox();}).catch(()=>toast('Photo illisible, réessayez'));}
   if(t.id==='scanFile'&&t.files[0])scanImage(t.files[0]);
   if(t.id==='puPick'){const p=prod(t.value);const c=$('puCost');if(p&&c)c.value=p.cost||'';}
   if(t.id==='bkFile'||t.id==='onFile'){const f=t.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restore(r.result);r.readAsText(f);}});
