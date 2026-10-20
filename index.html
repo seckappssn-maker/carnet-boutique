@@ -316,6 +316,22 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
 .vgrid{display:grid;gap:6px;align-items:center;overflow-x:auto}
 .vgrid input{text-align:center;padding:9px 4px;min-width:0;width:100%}
 .vgrid .h{font-size:13px;font-weight:700;text-align:center;color:var(--muted);white-space:nowrap}
+.btmark{font-size:.85em;margin-right:2px}
+:root[data-bt="quinc"]{--accent:#C2570C;--accent-soft:#FBE9DD;--on-accent:#fff}
+:root[data-bt="mode"]{--accent:#7A3FB0;--accent-soft:#EEE6F7;--on-accent:#fff}
+:root[data-bt="cosm"]{--accent:#B03A6E;--accent-soft:#F8E3EC;--on-accent:#fff}
+:root[data-bt="phar"]{--accent:#1565C0;--accent-soft:#E3EEFB;--on-accent:#fff}
+:root[data-bt="art"]{--accent:#8A5A1F;--accent-soft:#F2E8DA;--on-accent:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"])[data-bt="quinc"]{--accent:#F0A066;--accent-soft:#3A2414;--on-accent:#1A0D04}
+:root:not([data-theme="light"])[data-bt="mode"]{--accent:#B48BE0;--accent-soft:#2A1E3A;--on-accent:#140A20}
+:root:not([data-theme="light"])[data-bt="cosm"]{--accent:#E58AB0;--accent-soft:#3A1A28;--on-accent:#1E0812}
+:root:not([data-theme="light"])[data-bt="phar"]{--accent:#7FB2EE;--accent-soft:#172638;--on-accent:#081322}
+:root:not([data-theme="light"])[data-bt="art"]{--accent:#D6A866;--accent-soft:#33261A;--on-accent:#1A1006}}
+:root[data-theme="dark"][data-bt="quinc"]{--accent:#F0A066;--accent-soft:#3A2414;--on-accent:#1A0D04}
+:root[data-theme="dark"][data-bt="mode"]{--accent:#B48BE0;--accent-soft:#2A1E3A;--on-accent:#140A20}
+:root[data-theme="dark"][data-bt="cosm"]{--accent:#E58AB0;--accent-soft:#3A1A28;--on-accent:#1E0812}
+:root[data-theme="dark"][data-bt="phar"]{--accent:#7FB2EE;--accent-soft:#172638;--on-accent:#081322}
+:root[data-theme="dark"][data-bt="art"]{--accent:#D6A866;--accent-soft:#33261A;--on-accent:#1A1006}
 .vfbox{margin:4px 0}
 .brandbtn{border:0;background:none;padding:0;color:inherit;text-align:left;cursor:pointer}
 .brandv{font-size:15px;opacity:.6}
@@ -1766,7 +1782,7 @@ async function pushResync(){if(pushSynced||pushDemo()||!pushFlag()||!pushOk()||N
    Vente au carton / pièce entière : pour tous les articles qui ont un prix de
    vente du carton (ou de la pièce de tissu).
    ====================================================================== */
-const fashOn=()=>{const t=S&&S.btype;return ['mode','cosm','art'].includes(t)||!!(S&&(!t||t==='tout')&&S.fash&&S.fash.on);};
+const fashOn=()=>{const t=S&&S.btype;return ['mode','cosm','art','phar'].includes(t)||!!(S&&(!t||t==='tout')&&S.fash&&S.fash.on);};
 const hasVar=p=>!!(p&&Array.isArray(p.var)&&p.var.length);
 const isSoft=u=>['m','kg','litre','m²'].includes(u);
 const canPk=p=>!!(p&&p.pack>0&&p.pricePk>0);
@@ -2048,15 +2064,16 @@ const BTY={
   quinc:{e:'🔩',n:'Quincaillerie / matériaux',d:'Ciment, fer, peinture… Au sac, au mètre, au kg, devis, fournisseurs.'},
   mode:{e:'👗',n:'Mode, chaussures, tissus',d:'Tailles, couleurs, tissus au mètre, commandes à livrer.'},
   cosm:{e:'💄',n:'Cosmétiques / parfums',d:'Péremption, boutique en ligne, commandes à livrer.'},
+  phar:{e:'💊',n:'Pharmacie / parapharmacie',d:'Médicaments et parapharmacie : péremption, code-barres, alerte stock bas, commandes à livrer.'},
   art:{e:'🛠',n:'Artisan / sur commande',d:'Menuisier, décorateur… Vos réalisations en vitrine, devis, commandes avec acompte. Pas de stock.'},
   tout:{e:'📦',n:'Autre / toutes les fonctions',d:'Tout Carnet Boutique, comme avant.'}};
-const BT_ORDER=['alim','quinc','mode','cosm','art','tout'];
+const BT_ORDER=['alim','quinc','mode','cosm','phar','art','tout'];
 const btype=()=>(S&&BTY[S.btype])?S.btype:'tout';
 const isArt=()=>btype()==='art';
 const varOn=()=>btype()==='mode'||(btype()==='tout'&&!!(S&&S.fash&&S.fash.on));
-const FEAT={carton:['alim','quinc','cosm','tout'],gros:['alim','quinc','cosm','tout'],exp:['alim','cosm','tout'],code:['alim','quinc','cosm','tout'],stock:['alim','quinc','mode','cosm','tout'],unit:['alim','quinc','mode','tout']};
+const FEAT={carton:['alim','quinc','cosm','phar','tout'],gros:['alim','quinc','cosm','tout'],exp:['alim','cosm','phar','tout'],code:['alim','quinc','cosm','phar','tout'],stock:['alim','quinc','mode','cosm','phar','tout'],unit:['alim','quinc','mode','phar','tout']};
 const feat=k=>FEAT[k].includes(btype());
-function setType(t){if(!BTY[t])return;S.btype=t;const F2=fashDef();if(t!=='tout')F2.on=['mode','cosm','art'].includes(t);if(t==='art'){webDef().stock=false;}save();}
+function setType(t){if(!BTY[t])return;S.btype=t;const F2=fashDef();if(t!=='tout')F2.on=['mode','cosm','art','phar'].includes(t);if(t==='art'){webDef().stock=false;}save();}
 function btPicker(cur,attr){return '<div class="btlist">'+BT_ORDER.map(k=>'<button type="button" class="btc" '+attr+'="'+k+'" aria-pressed="'+(cur===k)+'"><span class="bte">'+BTY[k].e+'</span><span><b>'+BTY[k].n+'</b><small>'+BTY[k].d+'</small></span></button>').join('')+'</div>';}
 function btCard(){return '<h3>Type de boutique</h3><div class="card stack"><div class="small">Vous voyez seulement ce qui sert à votre type de boutique. Vous pouvez changer quand vous voulez : vos ventes, articles et crédits restent.</div>'+btPicker(btype(),'data-bt-set')+'</div>';}
 // Réglages : changer le type
@@ -2073,7 +2090,7 @@ document.addEventListener('submit',e=>{if(e.target.id!=='fOn')return;if(!ONB_T){
 /* ---------- Exemple sans compte : choisir le type d'abord ---------- */
 function demoPick(){openSheet('Quel type de boutique ?','<div class="small" style="margin-bottom:10px">Choisissez pour voir l\'exemple qui vous ressemble.</div>'+btPicker('','data-bt-demo'));}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-bt-demo]');if(!b)return;const t=b.dataset.btDemo;closeSheet();
-  XDEMO=true;start({name:t==='mode'?'Awa Fashion (exemple)':t==='art'?'Menuiserie Diallo (exemple)':'Boutique Exemple',owner:'Moustapha',phone:'77 000 00 00',address:'Dakar'},true,30);
+  XDEMO=true;start({name:({mode:'Awa Fashion',art:'Menuiserie Diallo',phar:'Pharmacie du Marché',cosm:'Beauté Divine',quinc:'Quincaillerie Touba'}[t]||'Boutique')+' (exemple)',owner:'Moustapha',phone:'77 000 00 00',address:'Dakar'},true,30);
   setType(t);demoData(t);tab='home';render();scrollTo(0,0);toast('Exemple : essayez tout, rien n\'est enregistré');},true);
 function demoData(t){const d=todayISO();
   if(t==='mode'){S.products=[
@@ -2113,6 +2130,7 @@ const BT_TXT={
   mode:{nom:'Ex : Robe longue satin',prix:'Ex : 15000',qte:'Ex : 5',achat:'Ex : 9000',vide:'Ajoutez vos articles (robes, ensembles, chaussures, sacs, tissus…) avec une photo, le prix, les tailles et les couleurs.'},
   cosm:{nom:'Ex : Parfum 100 ml',prix:'Ex : 10000',qte:'Ex : 12',achat:'Ex : 6500',vide:'Ajoutez vos articles (parfums, crèmes, mèches, maquillage…) avec le prix, la quantité et la date de péremption.'},
   art:{nom:'Ex : Armoire 3 portes',prix:'Ex : 250000',qte:'',achat:'',vide:''},
+  phar:{nom:'Ex : Paracétamol 500 mg (boîte)',prix:'Ex : 1500',qte:'Ex : 30',achat:'Ex : 1100',vide:'Ajoutez vos produits (médicaments, parapharmacie, soins…) avec le prix, la quantité et la date de péremption. Scannez le code-barres de la boîte.'},
   tout:null};
 function txtGate(){const T=BT_TXT[btype()];if(!T)return;const ph=(id,v)=>{const e=$(id);if(e&&v)e.placeholder=v;};
   ph('prName',T.nom);ph('prPrice',T.prix);ph('prQty',T.qte);ph('prCost',T.achat);}
@@ -2242,6 +2260,31 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-pph-del],[
     if(t==='mode')app.querySelectorAll('[data-act="restock"]').forEach(e=>e.hidden=true);
     app.querySelectorAll('h3').forEach(h=>{if(h.textContent.trim().toLowerCase().startsWith('lecteur de code-barres')){h.hidden=true;if(h.nextElementSibling)h.nextElementSibling.hidden=true;}});}
   if(t!=='tout'&&!feat('gros')){const g=app.querySelector('[data-act="gros"]');const sg=g&&g.closest('.seg');if(sg){sg.hidden=true;const gr=sg.parentElement;if(gr&&gr.classList.contains('grid2'))gr.style.gridTemplateColumns='1fr';}}};}
+
+/* ---------- Chaque type a son visage : couleur, symbole, titres, exemple ---------- */
+const BT_LOOK={
+  alim:{tab:'Stock',stock:'Stock',col:'#0B6E5B'},
+  quinc:{tab:'Stock',stock:'Matériaux en stock',col:'#C2570C'},
+  mode:{tab:'Articles',stock:'Mes articles',col:'#7A3FB0'},
+  cosm:{tab:'Produits',stock:'Mes produits',col:'#B03A6E'},
+  phar:{tab:'Produits',stock:'Médicaments et produits',col:'#1565C0'},
+  art:{tab:'Articles',stock:'Mes réalisations',col:'#8A5A1F'},
+  tout:{tab:'Stock',stock:'Stock',col:'#0B6E5B'}};
+function lookGate(){const t=S?btype():'tout';const r=document.documentElement;if(r.dataset.bt!==t)r.dataset.bt=t;
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=(BT_LOOK[t]||BT_LOOK.tout).col;
+  const app=$('app');if(!app||!S)return;const L=BT_LOOK[t]||BT_LOOK.tout;
+  const br=app.querySelector('header.top .brand');if(br&&t!=='tout'&&!br.querySelector('.btmark')){br.insertAdjacentHTML('afterbegin','<span class="btmark">'+BTY[t].e+'</span> ');}
+  const tb=app.querySelector('nav.tabs [data-tab="stock"]');if(tb&&tb.lastChild&&tb.lastChild.nodeType===3)tb.lastChild.textContent=L.tab;
+  if(tab==='stock'){const h=app.querySelector('.wrap > h2');if(h&&h.textContent.trim()==='Stock')h.textContent=L.stock;}}
+{const _r4=render;render=function(){const x=_r4.apply(this,arguments);try{lookGate();}catch(e){}return x;};}
+{const _st2=setType;setType=function(){const x=_st2.apply(this,arguments);try{lookGate();}catch(e){}return x;};}
+// exemples sans compte pour chaque type
+{const _dd=demoData;demoData=function(t){_dd.apply(this,arguments);const d=todayISO();const P=(name,unit,cost,price,qty,min,exp,o)=>Object.assign({id:uid(),name,unit,cost,price,priceGros:0,qty,min,code:'',exp:exp||'',pack:0,fav:true,added:d},o||{});
+  const reset=()=>{S.sales=[];S.quotes=[];S.purchases=[];S.payments=[];S.seq={sale:0,quote:0};};
+  if(t==='phar'){S.products=[P('Paracétamol 500 mg','boîte',900,1500,40,10,addDays(d,300)),P('Vitamine C 1000 mg','boîte',1800,2500,15,5,addDays(d,25)),P('Sirop contre la toux','bouteille',2200,3500,8,4,addDays(d,180)),P('Gel hydroalcoolique 100 ml','pièce',600,1000,30,10,addDays(d,400)),P('Crème hydratante','pot',2500,4000,3,4,addDays(d,-3))];reset();}
+  if(t==='cosm'){S.products=[P('Parfum oriental 100 ml','pièce',6500,10000,12,3,addDays(d,700)),P('Crème karité 250 g','pot',2000,3500,20,5,addDays(d,240)),P('Mèches brésiliennes','paquet',9000,15000,6,2),P('Rouge à lèvres mat','pièce',1500,3000,25,5,addDays(d,500)),P('Lait de toilette','bouteille',2500,4500,2,4,addDays(d,20))];reset();}
+  if(t==='quinc'){S.products=[P('Ciment 50 kg','sac',4100,4500,120,20),P('Fer de 10','barre',3200,3800,200,50),P('Peinture blanche 20 L','seau',18000,23000,10,3),P('Tuyau PVC 100','barre',3500,4500,40,10),P('Carreaux 40x40','m²',4500,6000,80,20)];reset();}
+  writeLocal();};}
 
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
