@@ -131,6 +131,10 @@ label.f input,label.f textarea{border:1.5px solid var(--line);background:var(--b
 .err{color:var(--bad);font-weight:700}
 .send{border:0;border-radius:16px;background:var(--wa);color:#fff;font-weight:800;padding:16px;font-size:calc(var(--fs)*1.05);min-height:54px}
 .big{width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:var(--yellow-soft)}
+.big.swipe{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.big.swipe::-webkit-scrollbar{display:none}
+.big.swipe .sl{flex:0 0 100%;height:100%;scroll-snap-align:center}
+.big.swipe .sl img,.big.swipe .sl svg{width:100%;height:100%;object-fit:cover;display:block}
 .big img,.big svg{width:100%;height:100%;object-fit:cover;display:block}
 .thumbs{display:flex;gap:8px}
 .thumbs button{width:62px;height:62px;border-radius:12px;overflow:hidden;border:2px solid transparent;padding:0;background:var(--yellow-soft)}
@@ -320,9 +324,13 @@ function all(){head();cats();list();bar();$('lang').textContent=LANG==='fr'?'Wol
 function open(html){$('sheetRoot').innerHTML='<div class="shade" id="shade"><div class="sheet" role="dialog" aria-modal="true">'+html+'</div></div>';}
 function close(){$('sheetRoot').innerHTML='';}
 let SEEI=0;
-function see(id,i){const a=art(id);i=i||0;SEEI=i;const out=isOut(a);
+/* photo en grand : on peut aussi la faire glisser avec le doigt */
+function swipeInit(){const sw=$('bigSw');if(!sw)return;sw.scrollLeft=SEEI*sw.clientWidth;
+  sw.addEventListener('scroll',()=>{clearTimeout(sw._t);sw._t=setTimeout(()=>{const k=Math.round(sw.scrollLeft/sw.clientWidth);if(k===SEEI)return;SEEI=k;
+    document.querySelectorAll('.thumbs button').forEach((b,j)=>b.setAttribute('aria-pressed',String(j===k)));},90);},{passive:true});}
+function see(id,i){const a=art(id);i=i||0;SEEI=i;setTimeout(swipeInit,0);const out=isOut(a);
   open('<div class="sh"><h2>'+esc(a.nom)+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
-   '<div class="big'+(ART()?' tall':'')+'">'+pic(a,i)+'</div>'+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
+   ((a.img||[]).length>1?'<div class="big swipe'+(ART()?' tall':'')+'" id="bigSw">'+a.img.map((_,k)=>'<div class="sl">'+pic(a,k)+'</div>').join('')+'</div>':'<div class="big'+(ART()?' tall':'')+'">'+pic(a,i)+'</div>')+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
    (a.desc?'<p>'+esc(a.desc)+'</p>':'')+
    '<div class="pr">'+(ART()?'<span class="note">à partir de</span>':'')+'<span class="price" style="font-size:28px">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
    (out?'<p class="err">'+t('Épuisé')+'</p>':hasV(a)?varBox(a):'<button class="send" type="button" data-p="'+a.id+'" data-close>'+(ART()?'Demander un devis':t('Ajouter')+' · '+F(a.prix))+'</button>'));}
@@ -384,7 +392,7 @@ async function send(){if(SENDING)return;keep();if(!(window._nom||'').trim())retu
 document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}
   const b=e.target.closest('button,[data-close]');if(!b)return;
   if(b.dataset.cat){CAT=b.dataset.cat;cats();list();return;}
-  if(b.dataset.see){if(!SV||SV.id!==b.dataset.see)SV=null;see(b.dataset.see,+(b.dataset.i||0));return;}
+  if(b.dataset.see){const sw=$('bigSw');if(sw&&b.closest('.thumbs')){const k=+(b.dataset.i||0);SEEI=k;sw.scrollTo({left:k*sw.clientWidth,behavior:'smooth'});document.querySelectorAll('.thumbs button').forEach((x,j)=>x.setAttribute('aria-pressed',String(j===k)));return;}if(!SV||SV.id!==b.dataset.see)SV=null;see(b.dataset.see,+(b.dataset.i||0));return;}
   if(b.dataset.st!=null&&SV){SV.t=b.dataset.st;const a=art(SV.id);const okc=[...new Set(a.var.map(v=>v.c))].filter(c=>vq(a,SV.t,c)-(cart[ck(a.id,SV.t,c)]||0)>0);if(SV.c!=null&&!okc.includes(SV.c))SV.c=null;if(SV.c==null&&okc.length===1)SV.c=okc[0];see(SV.id,SEEI);return;}
   if(b.dataset.sc!=null&&SV){SV.c=b.dataset.sc;see(SV.id,SEEI);return;}
   if(b.dataset.pv&&SV){const a=art(SV.id),k=ck(a.id,SV.t,SV.c);if(vq(a,SV.t,SV.c)-(cart[k]||0)<=0)return;cart[k]=(cart[k]||0)+1;SV=null;list();bar();close();return;}
