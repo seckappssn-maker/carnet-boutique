@@ -153,7 +153,7 @@ footer b{color:var(--ink)}
 
 <div class="demo" id="demo" hidden>Exemple de boutique en ligne : articles et photos d'exemple</div>
 <header class="hero"><div class="wrap">
-  <div class="tools"><button class="tbtn" id="bigTxt" type="button">A+</button><button class="tbtn" id="lang" type="button">Wolof</button></div>
+  <div class="tools"><button class="tbtn" id="bigTxt" type="button">A+</button><button class="tbtn" id="lang" type="button">Wolof</button><button class="tbtn" id="theme" type="button" aria-label="Clair ou sombre">🌙</button></div>
   <div class="id"><div class="logo" id="logo">PA</div><div><h1 id="nom">Boutique</h1></div></div>
   <p class="txt" id="texte"></p>
   <div class="chips" id="chips"></div>
@@ -346,11 +346,17 @@ document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}
   if(b.id==='sendWa'){send();return;}
   if(b.hasAttribute('data-close')){close();return;}
   if(b.id==='cartBtn'){showCart();return;}
+  if(b.id==='theme'){const r=document.documentElement,dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);r.setAttribute('data-theme',dark?'light':'dark');try{localStorage.setItem('carnetShop.theme',dark?'light':'dark');}catch(x){}themeBtn();return;}
   if(b.id==='lang'){LANG=LANG==='fr'?'wo':'fr';all();return;}
   if(b.id==='bigTxt'){const big=document.documentElement.style.getPropertyValue('--fs')==='19px';document.documentElement.style.setProperty('--fs',big?'16px':'19px');b.textContent=big?'A+':'A−';return;}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
 $('q').addEventListener('input',e=>{Q=e.target.value;list();});
+
+/* ---------- Clair / sombre (le client choisit, sinon comme le téléphone) ---------- */
+function themeBtn(){const r=document.documentElement,dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);$('theme').textContent=dark?'☀️':'🌙';}
+try{const th=localStorage.getItem('carnetShop.theme');if(th==='dark'||th==='light')document.documentElement.setAttribute('data-theme',th);}catch(e){}
+themeBtn();
 
 /* ---------- Démarrage ---------- */
 const SUPA_URL='https://ncsjgmkrsvtwklfrdbgy.supabase.co',SUPA_KEY='sb_publishable_oDE4BbU6J3RTnce1Oo91cQ_hokWgh0U';

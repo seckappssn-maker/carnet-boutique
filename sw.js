@@ -1,6 +1,6 @@
 // Carnet Boutique : permet d'ouvrir l'app même sans internet.
 // Pour forcer une mise à jour du cache, changer le numéro de VERSION.
-const VERSION = 'cb-v4';
+const VERSION = 'cb-v5';
 const APP = ['./', './index.html', './apple-touch-icon.png'];
 const LIBS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
