@@ -138,6 +138,11 @@ label.f input,label.f textarea{border:1.5px solid var(--line);background:var(--b
 .thumbs svg{width:100%;height:100%;display:block}
 .msg{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:calc(var(--fs)*.9)}
 .note{color:var(--muted);font-size:calc(var(--fs)*.85)}
+.vch{display:flex;flex-wrap:wrap;gap:8px}
+.vc{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;font-weight:800;min-height:46px}
+.vc[aria-pressed="true"]{border-color:#0B6E5B;background:#0B6E5B;color:#fff}
+.vc:disabled{opacity:.38;text-decoration:line-through;cursor:not-allowed}
+.vdot{display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.3);margin-right:6px;vertical-align:-1px}
 footer{color:var(--muted);text-align:center;font-size:13px;padding:6px 16px 20px}
 footer b{color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.add,.cartbtn,.send{transition:transform .12s}.add:active,.cartbtn:active,.send:active{transform:scale(.97)}}
@@ -182,11 +187,11 @@ function drawing(kind,bg,c,c2){ // dessins d'exemple : téléphone, robe, chauss
   return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="200" height="200" fill="'+bg+'"/><ellipse cx="100" cy="182" rx="62" ry="8" fill="#000" opacity=".1"/>'+k+'</svg>';
 }
 const EX={nom:'Boutique Awa (exemple)',photos:['data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 563"><rect width="1000" height="563" fill="#0B6E5B"/><circle cx="800" cy="120" r="220" fill="#FCEE45" opacity=".55"/><text x="70" y="300" font-family="Arial,sans-serif" font-size="60" font-weight="800" fill="#fff">Nouveautés de la semaine</text></svg>'),'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 563"><rect width="1000" height="563" fill="#084C3F"/><circle cx="800" cy="120" r="220" fill="#3FB596" opacity=".55"/><text x="70" y="300" font-family="Arial,sans-serif" font-size="60" font-weight="800" fill="#fff">-20 % sur les parfums</text></svg>')],texte:'Téléphones, vêtements, chaussures et parfums. Livraison partout à Dakar, envoi en région.',
-  whatsapp:'770000000',adresse:'Médina, Dakar',livraison:true,retrait:true,paiements:['Wave','Orange Money','Espèces'],
+  whatsapp:'770000000',adresse:'Médina, Dakar',zones:[{n:'Dakar',p:1500},{n:'Banlieue',p:2000},{n:'Régions',p:3500}],livraison:true,retrait:true,paiements:['Wave','Orange Money','Espèces'],
   articles:[
   {id:'a1',nom:'Téléphone 128 Go',cat:'Téléphones',prix:95000,old:110000,desc:'Comme neuf, batterie 92 %, avec chargeur.',stock:2,img:[drawing('phone','#DCE9F6','#2F6FB0'),drawing('phone','#E8EEF4','#7A8C9E')]},
   {id:'a2',nom:'Écouteurs sans fil',cat:'Téléphones',prix:8000,desc:'Bluetooth, boîtier de charge.',stock:15,img:[drawing('ecouteurs','#EEF0F2','#1C2321','#55615C')],badge:'new'},
-  {id:'a3',nom:'Robe wax',cat:'Vêtements',prix:15000,desc:'Tailles S à XL. Dites la taille dans la note.',stock:6,img:[drawing('robe','#FDEBD3','#D9480F','#0B6E5B')]},
+  {id:'a3',nom:'Robe wax',cat:'Vêtements',prix:15000,desc:'Wax 100 % coton.',stock:6,tailles:'Tailles : S, M, L',var:[{t:'S',c:'Rouge',q:2},{t:'M',c:'Rouge',q:1},{t:'M',c:'Bleu',q:2},{t:'L',c:'Bleu',q:1},{t:'L',c:'Rouge',q:0}],img:[drawing('robe','#FDEBD3','#D9480F','#0B6E5B')]},
   {id:'a4',nom:'Bazin riche 5 m',cat:'Vêtements',prix:25000,desc:'Plusieurs couleurs : demandez sur WhatsApp.',stock:0,img:[drawing('tissu','#E6F4EF','#0B6E5B','#FCEE45')]},
   {id:'a5',nom:'Baskets homme',cat:'Chaussures & sacs',prix:18000,desc:'Du 40 au 45.',stock:4,img:[drawing('chaussure','#F1F1F1','#1C2321','#E7E2D8')]},
   {id:'a6',nom:'Sac à main',cat:'Chaussures & sacs',prix:12500,desc:'Simili cuir, 3 couleurs.',stock:5,img:[drawing('sac','#F7E6D5','#8A4B2A','#C9A227')]},
@@ -202,13 +207,26 @@ const WO={'Ma commande':'Sama komand','Ajouter':'Yokk','Épuisé':'Jeex na','Liv
 let LANG='fr';const t=s=>LANG==='wo'&&WO[s]?WO[s]:s;
 
 /* ---------- État ---------- */
-let D=null,DEMO=true,CAT='Tout',Q='',cart={},mode='livraison',pay='';
+let D=null,DEMO=true,CAT='Tout',Q='',cart={},mode='livraison',pay='',ZONE='',SV=null;
+/* panier : clé = id de l'article, ou id|taille|couleur pour les articles avec tailles */
+const ckP=k=>{const a=String(k).split('|');return {id:a[0],t:a.length>1?a[1]:null,c:a.length>2?a[2]:''};};
+const ck=(id,t,c)=>t==null?id:id+'|'+t+'|'+(c||'');
+const vl=(t,c)=>[t&&t!=='Unique'?t:'',c].filter(Boolean).join(' · ');
+const hasV=a=>!!(a&&Array.isArray(a.var)&&a.var.length);
+const vq=(a,t,c)=>{const v=a.var.find(x=>x.t===t&&x.c===c);return v?(v.q===null||v.q===undefined?99:Math.floor(v.q)):0;};
+const COLS={noir:'#111',blanc:'#fff',rouge:'#D32F2F',bleu:'#1E5BC6',vert:'#2E7D32',jaune:'#F5C518',rose:'#F48FB1',beige:'#D9C2A0',marron:'#7B4A2A',gris:'#9E9E9E','doré':'#D4AF37',argent:'#C0C0C0',bordeaux:'#7B1E2E',orange:'#F57C00',violet:'#7B3FA0',kaki:'#7C7B4A',turquoise:'#1BB1B1'};
+const cdot=c=>{const h=COLS[String(c||'').toLowerCase().split(/\s+/)[0]];return h?'<span class="vdot" style="background:'+h+'"></span>':'';};
+const zoneOf=()=>(D.zones||[]).find(z=>z.n===ZONE);
+const frais=()=>mode==='livraison'&&zoneOf()?zoneOf().p:0;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const F=n=>Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' F';
 const pic=(a,i)=>{const s=(a.img||[])[i||0];if(!s)return '<svg viewBox="0 0 200 200" aria-hidden="true"><rect width="200" height="200" fill="#FFF8C2"/><path d="M70 90h60l-6 60H76z" fill="none" stroke="#0B6E5B" stroke-width="6" stroke-linejoin="round"/><path d="M84 90c0-22 32-22 32 0" fill="none" stroke="#0B6E5B" stroke-width="6"/></svg>';
   return s.startsWith('<svg')?s:'<img src="'+esc(s)+'" alt="'+esc(a.nom)+'" loading="lazy" decoding="async">';};
-const art=id=>D.articles.find(a=>a.id===id);
+const art=id=>D.articles.find(a=>a.id===ckP(id).id);
+const lname=k=>{const o=ckP(k),a=art(k);const l=o.t!=null?vl(o.t,o.c):'';return a.nom+(l?' ('+l+')':'');};
+const maxK=k=>{const o=ckP(k),a=art(k);return o.t!=null&&hasV(a)?vq(a,o.t,o.c):maxQ(a);};
+const qOf=id=>Object.entries(cart).filter(([k])=>ckP(k).id===id).reduce((s,[,q])=>s+q,0);
 const count=()=>Object.values(cart).reduce((x,y)=>x+y,0);
 const total=()=>Object.entries(cart).reduce((s,[id,q])=>s+(art(id)?art(id).prix*q:0),0);
 
@@ -234,12 +252,13 @@ function cats(){const cs=['Tout',...new Set(D.articles.map(a=>a.cat||'Articles')
   $('cats').innerHTML=cs.map(c=>'<button class="cat" type="button" data-cat="'+esc(c)+'" aria-pressed="'+(c===CAT)+'">'+esc(c==='Tout'?'Tout voir':c)+'</button>').join('');}
 const isOut=a=>a.stock!==null&&a.stock!==undefined&&!(a.stock>0);
 const maxQ=a=>a.stock===null||a.stock===undefined?99:a.stock;
-function card(a){const q=cart[a.id]||0,out=isOut(a);
+function card(a){const q=hasV(a)?qOf(a.id):(cart[a.id]||0),out=isOut(a);
   const badge=out?'<span class="badge b-out">'+t('Épuisé')+'</span>':a.old>a.prix?'<span class="badge b-promo">Promo</span>':(a.badge==='new'||a.nouveau)?'<span class="badge b-new">Nouveau</span>':'';
   return '<article class="card'+(out?' out':'')+'"><button class="pic" type="button" data-see="'+a.id+'" aria-label="Voir '+esc(a.nom)+'">'+pic(a)+badge+'</button>'+
    '<div class="cb"><h3>'+esc(a.nom)+'</h3>'+(a.desc?'<p class="desc">'+esc(a.desc)+'</p>':'')+
    '<div class="pr"><span class="price">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
-   (q?'<div class="step"><button type="button" data-m="'+a.id+'" aria-label="Enlever un">−</button><b>'+q+'</b><button type="button" data-p="'+a.id+'" aria-label="Ajouter un"'+(q>=maxQ(a)?' disabled':'')+'>+</button></div>'
+   (hasV(a)?(a.tailles?'<p class="desc">'+esc(a.tailles)+'</p>':'')+'<button class="add" type="button" data-see="'+a.id+'"'+(out?' disabled':'')+'>'+(out?t('Épuisé'):(q?'✓ '+q+' · ':'')+(a.vk==='qualite'?'Choisir':'Choisir la taille'))+'</button>':
+    q?'<div class="step"><button type="button" data-m="'+a.id+'" aria-label="Enlever un">−</button><b>'+q+'</b><button type="button" data-p="'+a.id+'" aria-label="Ajouter un"'+(q>=maxQ(a)?' disabled':'')+'>+</button></div>'
      :'<button class="add" type="button" data-p="'+a.id+'"'+(out?' disabled':'')+'>'+(out?t('Épuisé'):t('Ajouter'))+'</button>')+'</div></article>';}
 function list(){const q=Q.trim().toLowerCase();
   const as=D.articles.filter(a=>(CAT==='Tout'||a.cat===CAT)&&(!q||(a.nom+' '+(a.desc||'')).toLowerCase().includes(q)));
@@ -257,14 +276,24 @@ function see(id,i){const a=art(id);i=i||0;const out=isOut(a);
    '<div class="big">'+pic(a,i)+'</div>'+((a.img||[]).length>1?'<div class="thumbs">'+a.img.map((_,k)=>'<button type="button" data-see="'+a.id+'" data-i="'+k+'" aria-pressed="'+(k===i)+'">'+pic(a,k)+'</button>').join('')+'</div>':'')+
    (a.desc?'<p>'+esc(a.desc)+'</p>':'')+
    '<div class="pr"><span class="price" style="font-size:28px">'+F(a.prix)+'</span>'+(a.old>a.prix?'<span class="old">'+F(a.old)+'</span>':'')+'</div>'+
-   (out?'<p class="err">'+t('Épuisé')+'</p>':'<button class="send" type="button" data-p="'+a.id+'" data-close>'+t('Ajouter')+' · '+F(a.prix)+'</button>'));}
+   (out?'<p class="err">'+t('Épuisé')+'</p>':hasV(a)?varBox(a):'<button class="send" type="button" data-p="'+a.id+'" data-close>'+t('Ajouter')+' · '+F(a.prix)+'</button>'));}
+function varBox(a){if(!SV||SV.id!==a.id){SV={id:a.id,t:null,c:null};const ts=[...new Set(a.var.map(v=>v.t))],cs=[...new Set(a.var.map(v=>v.c))];if(ts.length===1)SV.t=ts[0];if(cs.length===1)SV.c=cs[0];}
+  const ts=[...new Set(a.var.map(v=>v.t))],cs=[...new Set(a.var.map(v=>v.c))],hasC=cs.some(Boolean);
+  const left=(t,c)=>vq(a,t,c)-(cart[ck(a.id,t,c)]||0);const leftT=t=>cs.reduce((s,c)=>s+Math.max(0,left(t,c)),0);
+  const ok=SV.t!=null&&SV.c!=null&&left(SV.t,SV.c)>0;
+  return (ts.length>1||ts[0]!=='Unique'?'<div class="ftitle">'+(a.vk==='qualite'?'Qualité':'Taille')+'</div><div class="vch">'+ts.map(x=>'<button type="button" class="vc" data-st="'+esc(x)+'" aria-pressed="'+(SV.t===x)+'"'+(leftT(x)<=0?' disabled':'')+'>'+esc(x)+'</button>').join('')+'</div>':'')+
+   (hasC?'<div class="ftitle">Couleur</div><div class="vch">'+cs.map(c=>'<button type="button" class="vc" data-sc="'+esc(c)+'" aria-pressed="'+(SV.c===c)+'"'+(SV.t==null||left(SV.t,c)<=0?' disabled':'')+'>'+cdot(c)+esc(c||'—')+'</button>').join('')+'</div>':'')+
+   (a.unite==='m'?'<p class="note">Prix pour 1 mètre. Dites le nombre de mètres dans la note si vous en voulez plus.</p>':'')+
+   '<button class="send" type="button" data-pv="1"'+(ok?'':' disabled')+'>'+(ok?t('Ajouter')+' · '+F(a.prix):'Choisissez '+(ts.length>1?(a.vk==='qualite'?'la qualité':'la taille'):'')+(ts.length>1&&hasC?' et ':'')+(hasC?'la couleur':''))+'</button>';}
 function showCart(err){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
   if(!ls.length){open('<div class="sh"><h2>'+t('Ma commande')+'</h2><button class="x" type="button" data-close>×</button></div><p class="empty">'+t('Votre panier est vide.')+'</p>');return;}
   const opts=[];if(D.livraison)opts.push(['livraison',t('Livraison')]);if(D.retrait)opts.push(['retrait','Je passe récupérer']);if(!opts.find(o=>o[0]===mode))mode=opts[0][0];
   open('<div class="sh"><h2>'+t('Ma commande')+'</h2><button class="x" type="button" data-close aria-label="'+t('Fermer')+'">×</button></div>'+
-   ls.map(([id,q])=>{const a=art(id);return '<div class="line"><div><div class="nm">'+esc(a.nom)+'</div><div class="sm">'+F(a.prix)+' × '+q+' = '+F(a.prix*q)+'</div></div><div class="step"><button type="button" data-m="'+id+'" data-in>−</button><b>'+q+'</b><button type="button" data-p="'+id+'" data-in'+(q>=maxQ(a)?' disabled':'')+'>+</button></div></div>'}).join('')+
-   '<div class="tot"><span>'+t('Total')+'</span><span>'+F(total())+'</span></div>'+
+   ls.map(([id,q])=>{const a=art(id);return '<div class="line"><div><div class="nm">'+esc(lname(id))+'</div><div class="sm">'+F(a.prix)+' × '+q+' = '+F(a.prix*q)+'</div></div><div class="step"><button type="button" data-m="'+esc(id)+'" data-in>−</button><b>'+q+'</b><button type="button" data-p="'+esc(id)+'" data-in'+(q>=maxK(id)?' disabled':'')+'>+</button></div></div>'}).join('')+
    (opts.length>1?'<div class="seg">'+opts.map(o=>'<button type="button" data-mode="'+o[0]+'" aria-pressed="'+(o[0]===mode)+'">'+esc(o[1])+'</button>').join('')+'</div>':'')+
+   (mode==='livraison'&&(D.zones||[]).length?'<div class="ftitle">Zone de livraison</div><div class="vch">'+D.zones.map(z=>'<button type="button" class="vc" data-zone="'+esc(z.n)+'" aria-pressed="'+(z.n===ZONE)+'">'+esc(z.n)+' · '+F(z.p)+'</button>').join('')+'</div>':'')+
+   (frais()?'<div class="line" style="border:0;padding:0"><span class="sm">Livraison ('+esc(ZONE)+')</span><span class="sm">'+F(frais())+'</span></div>':'')+
+   '<div class="tot"><span>'+t('Total')+'</span><span>'+F(total()+frais())+'</span></div>'+
    '<label class="f">'+t('Votre nom')+'<input id="cNom" autocomplete="name" value="'+esc(window._nom||'')+'"></label>'+
    '<label class="f">'+t('Votre téléphone')+'<input id="cTel" type="tel" inputmode="tel" autocomplete="tel" placeholder="77 000 00 00" value="'+esc(window._tel||'')+'"></label>'+
    (mode==='livraison'?'<label class="f">'+t('Adresse ou repère')+'<input id="cAdr" placeholder="Ex : Parcelles U17, près de la pharmacie" value="'+esc(window._adr||'')+'"></label>':'')+
@@ -275,11 +304,12 @@ function showCart(err){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(i
    '<p class="note">Le vendeur reçoit votre commande sur WhatsApp et vous répond pour confirmer. Les prix sont ceux de la boutique.</p>');}
 function keep(){if($('cNom'))window._nom=$('cNom').value;if($('cTel'))window._tel=$('cTel').value;if($('cAdr'))window._adr=$('cAdr').value;if($('cNote'))window._note=$('cNote').value;}
 function message(no){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
-  return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', je veux commander'+(no?' (commande N° '+no+')':'')+' :\n'+ls.map(([id,q])=>'• '+q+' × '+art(id).nom+' = '+F(art(id).prix*q)).join('\n')+
-   '\nTotal : '+F(total())+'\n\nNom : '+(window._nom||'').trim()+'\nTél : '+(window._tel||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
+  return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', je veux commander'+(no?' (commande N° '+no+')':'')+' :\n'+ls.map(([id,q])=>'• '+q+' × '+lname(id)+' = '+F(art(id).prix*q)).join('\n')+
+   (frais()?'\nLivraison ('+ZONE+') : '+F(frais()):'')+'\nTotal : '+F(total()+frais())+'\n\nNom : '+(window._nom||'').trim()+'\nTél : '+(window._tel||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(ZONE?ZONE+', ':'')+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
 let SENDING=false;
 async function send(){if(SENDING)return;keep();if(!(window._nom||'').trim())return showCart(t('Écrivez votre nom.'));
   if(String(window._tel||'').replace(/\D/g,'').length<9)return showCart('Écrivez votre numéro de téléphone.');
+  if(mode==='livraison'&&(D.zones||[]).length&&!zoneOf())return showCart('Choisissez la zone de livraison.');
   if(mode==='livraison'&&!(window._adr||'').trim())return showCart('Écrivez l\'adresse de livraison.');
   if(DEMO){open('<div class="sh"><h2>Message envoyé au vendeur</h2><button class="x" type="button" data-close>×</button></div><p class="note">Dans l\'exemple rien n\'est envoyé. Dans la vraie boutique, la commande arrive dans l\'app du vendeur, son téléphone sonne, et WhatsApp s\'ouvre avec ce message :</p><div class="msg">'+esc(message(12))+'</div>');return;}
   let n=String(D.whatsapp||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.length===9)n='221'+n;if(n.length<9)return showCart('Le vendeur n\'a pas encore mis son numéro WhatsApp.');
@@ -287,8 +317,8 @@ async function send(){if(SENDING)return;keep();if(!(window._nom||'').trim())retu
   let no='';
   try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),12000);
     const r=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_commande_public',{method:'POST',signal:ac.signal,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({p_code:CODE,p_cmd:{nom:window._nom.trim(),tel:String(window._tel).trim(),mode,adresse:(window._adr||'').trim(),paiement:pay,note:(window._note||'').trim(),
-        lignes:Object.entries(cart).filter(([id,q])=>q>0&&art(id)).map(([id,q])=>({id,q}))}})});
+      body:JSON.stringify({p_code:CODE,p_cmd:{nom:window._nom.trim(),tel:String(window._tel).trim(),mode,adresse:(window._adr||'').trim(),paiement:pay,note:(window._note||'').trim(),zone:mode==='livraison'?ZONE:'',
+        lignes:Object.entries(cart).filter(([id,q])=>q>0&&art(id)).map(([k,q])=>{const o=ckP(k);return o.t!=null?{id:o.id,q,vt:o.t,vc:o.c}:{id:o.id,q};})}})});
     clearTimeout(to);const j=await r.json();
     if(j&&j.ok){no=String(j.no);
       if(j.alerte){const txt='Nouvelle commande N° '+j.no+' · '+F(j.total)+' · '+window._nom.trim();const u='https://ntfy.sh/'+j.alerte;
@@ -304,8 +334,12 @@ async function send(){if(SENDING)return;keep();if(!(window._nom||'').trim())retu
 document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}
   const b=e.target.closest('button,[data-close]');if(!b)return;
   if(b.dataset.cat){CAT=b.dataset.cat;cats();list();return;}
-  if(b.dataset.see){see(b.dataset.see,+(b.dataset.i||0));return;}
-  if(b.dataset.p){keep();const a=art(b.dataset.p);if(isOut(a))return;cart[a.id]=Math.min((cart[a.id]||0)+1,maxQ(a));list();bar();if(b.hasAttribute('data-in'))showCart();else if(b.hasAttribute('data-close'))close();return;}
+  if(b.dataset.see){if(!SV||SV.id!==b.dataset.see)SV=null;see(b.dataset.see,+(b.dataset.i||0));return;}
+  if(b.dataset.st!=null&&SV){SV.t=b.dataset.st;const a=art(SV.id);const okc=[...new Set(a.var.map(v=>v.c))].filter(c=>vq(a,SV.t,c)-(cart[ck(a.id,SV.t,c)]||0)>0);if(SV.c!=null&&!okc.includes(SV.c))SV.c=null;if(SV.c==null&&okc.length===1)SV.c=okc[0];see(SV.id);return;}
+  if(b.dataset.sc!=null&&SV){SV.c=b.dataset.sc;see(SV.id);return;}
+  if(b.dataset.pv&&SV){const a=art(SV.id),k=ck(a.id,SV.t,SV.c);if(vq(a,SV.t,SV.c)-(cart[k]||0)<=0)return;cart[k]=(cart[k]||0)+1;SV=null;list();bar();close();return;}
+  if(b.dataset.zone!=null){keep();ZONE=b.dataset.zone;showCart();return;}
+  if(b.dataset.p){keep();const k=b.dataset.p,a=art(k);if(!a||isOut(a))return;cart[k]=Math.min((cart[k]||0)+1,maxK(k));list();bar();if(b.hasAttribute('data-in'))showCart();else if(b.hasAttribute('data-close'))close();return;}
   if(b.dataset.m){keep();const id=b.dataset.m;cart[id]=Math.max(0,(cart[id]||0)-1);if(!cart[id])delete cart[id];list();bar();if(b.hasAttribute('data-in'))showCart();return;}
   if(b.dataset.mode){keep();mode=b.dataset.mode;showCart();return;}
   if(b.dataset.pay){keep();pay=b.dataset.pay;showCart();return;}
@@ -336,8 +370,11 @@ async function boot(){
     D={nom:j.nom||'Boutique',texte:j.texte||'',adresse:j.adresse||'',whatsapp:j.whatsapp||'',livraison:j.livraison!==false,retrait:j.retrait!==false,
        paiements:Array.isArray(j.paiements)?j.paiements:[],
        articles:(Array.isArray(j.articles)?j.articles:[]).filter(a=>a&&a.nom&&a.prix>0).map(a=>({id:String(a.id),nom:a.nom,cat:a.cat||'Articles',prix:+a.prix,old:+a.old||0,desc:a.desc||'',
-         stock:a.stock===null||a.stock===undefined?null:+a.stock,nouveau:!!a.nouveau,img:(Array.isArray(a.img)?a.img:[]).filter(u=>typeof u==='string'&&/^(https:|data:image\/)/.test(u))}))};
+         stock:a.stock===null||a.stock===undefined?null:+a.stock,nouveau:!!a.nouveau,unite:a.unite||'',vk:a.vk||'',
+         var:Array.isArray(a.var)&&a.var.length?a.var.filter(v=>v&&typeof v.t==='string').map(v=>({t:v.t,c:String(v.c||''),q:v.q===null||v.q===undefined?null:+v.q})):null,img:(Array.isArray(a.img)?a.img:[]).filter(u=>typeof u==='string'&&/^(https:|data:image\/)/.test(u))}))};
     if(!D.livraison&&!D.retrait)D.livraison=true;
+    D.zones=(Array.isArray(j.zones)?j.zones:[]).filter(z=>z&&z.n).map(z=>({n:String(z.n),p:+z.p||0}));
+    D.articles.forEach(a=>{if(hasV(a)){const ts=[...new Set(a.var.filter(v=>v.q===null||v.q>0).map(v=>v.t))].filter(x=>x!=='Unique');if(ts.length)a.tailles=(a.vk==='qualite'?'':'Tailles : ')+ts.join(', ');}});
     if(j.logo!==undefined||j.photos!==undefined){D.logo=j.logo;D.photos=j.photos;}
     else{try{const v=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_vitrine',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_code:CODE})});
       if(v.ok){const x=await v.json();if(x&&typeof x==='object'){D.logo=x.logo;D.photos=x.photos;}}}catch(e){}}
