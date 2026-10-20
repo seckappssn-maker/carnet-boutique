@@ -2295,6 +2295,55 @@ function lookGate(){const t=S?btype():'tout';const r=document.documentElement;if
 // Avec des tailles : toucher « Total » amène au tableau des quantités
 document.addEventListener('focusin',e=>{if(e.target.id!=='prQty'||!VF||!vfOn())return;e.target.blur();const f=document.querySelector('[data-vq]');if(f){f.scrollIntoView({block:'center',behavior:'smooth'});setTimeout(()=>f.focus(),350);}else{const b=$('vfBox');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});}});
 
+/* ---------- Devis et factures en format A4 (tableau, total en lettres, signatures) ---------- */
+function enLettres(n){n=Math.round(Math.abs(n));if(n===0)return 'zéro';
+  const U=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];
+  const D=['','dix','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];
+  const deux=(x,fin)=>{if(x<20)return U[x];const d=Math.floor(x/10),u=x%10;
+    if(d===7||d===9){const r=10+u;return D[d]+(d===7&&u===1?'-et-':'-')+U[r];}
+    if(u===0)return D[d]+(d===8&&fin?'s':'');return D[d]+(u===1&&d!==8?'-et-':'-')+U[u];};
+  const trois=(x,fin)=>{const c=Math.floor(x/100),r=x%100;let s='';
+    if(c)s=(c>1?U[c]+'-':'')+'cent'+(c>1&&r===0&&fin?'s':'');
+    if(r)s+=(s?'-':'')+deux(r,fin);return s;};
+  const parts=[];const mi=Math.floor(n/1e9),m=Math.floor(n/1e6)%1000,k=Math.floor(n/1000)%1000,r=n%1000;
+  if(mi)parts.push(trois(mi,true)+'-milliard'+(mi>1?'s':''));
+  if(m)parts.push(trois(m,true)+'-million'+(m>1?'s':''));
+  if(k)parts.push(k===1?'mille':trois(k,false)+'-mille');
+  if(r)parts.push(trois(r,true));
+  return parts.join('-');}
+function docA4(kind,s){const sh=S.shop||{},c=s.clientId?client(s.clientId):null,tel=(c&&c.phone)||s.phone||'';
+  const col=(typeof BT_LOOK!=='undefined'&&BT_LOOK[btype()]||{col:'#1F4E9A'}).col,isQ=kind==='q';
+  const titre=isQ?'DEVIS / PROFORMA':'FACTURE';
+  const fmt=n=>Math.round(n||0).toLocaleString('fr-FR').replace(/\s/g,' ');
+  const qty=q=>{const v=q2(q);return Number.isInteger(v)&&v<10?'0'+v:String(v).replace('.',',');};
+  const typ=btype()!=='tout'&&BTY[btype()]?BTY[btype()].n:'';
+  const logo=S.web&&typeof S.web.logo==='string'&&S.web.logo.startsWith('data:image/')?'<img src="'+esc(S.web.logo)+'" style="height:58px;max-width:120px;object-fit:contain;margin-bottom:4px" alt="">':'';
+  const reste=isQ?0:Math.max(0,(s.total||0)-(s.paid||0));
+  return '<style>#pdfArea .a4{padding:26px 30px 30px;font:14px/1.35 Arial,Helvetica,sans-serif;color:#111}'+
+   '#pdfArea .a4 .hd{text-align:center;margin-bottom:12px}#pdfArea .a4 .nm{font:800 27px/1.1 Arial,sans-serif;color:'+col+';text-transform:uppercase;letter-spacing:.3px}'+
+   '#pdfArea .a4 .pill{display:inline-block;background:'+col+';color:#fff;border-radius:99px;padding:4px 16px;font-weight:700;margin:6px 0 4px}'+
+   '#pdfArea .a4 .inf{color:'+col+';font-weight:700;font-size:13.5px}#pdfArea .a4 .ad{color:'+col+';font-size:13px}'+
+   '#pdfArea .a4 .tt{display:flex;justify-content:space-between;align-items:flex-end;margin-top:8px}#pdfArea .a4 .tt b{font:800 22px Arial,sans-serif;color:'+col+'}'+
+   '#pdfArea .a4 .no{color:#C0392B;font-weight:800;font-size:16px;text-align:right}#pdfArea .a4 .cl{margin:8px 0 10px;padding-bottom:8px;border-bottom:1px dashed #999;font-size:15px}'+
+   '#pdfArea .a4 table{width:100%;border-collapse:collapse;border:2px solid '+col+'}#pdfArea .a4 th{background:#EAF1FB;color:'+col+';font-size:12px;padding:8px 6px;border:1px solid #9DB6DD;text-align:center}'+
+   '#pdfArea .a4 td{border:1px solid #9DB6DD;padding:7px 8px;font-size:13.5px}#pdfArea .a4 td.c{text-align:center}#pdfArea .a4 td.n{text-align:right;white-space:nowrap}'+
+   '#pdfArea .a4 .tot td{font-weight:800;color:'+col+';font-size:16px;border-top:2px solid '+col+'}#pdfArea .a4 .let{margin-top:14px;font-size:13.5px}'+
+   '#pdfArea .a4 .sig{display:flex;justify-content:space-between;margin-top:46px;font-size:13px}</style>'+
+   '<div class="a4"><div class="hd">'+logo+'<div class="nm">'+esc(sh.name||'')+'</div>'+(sh.owner?'<div class="pill">'+esc(sh.owner)+'</div>':'')+
+   (typ?'<div class="inf">'+esc(typ)+'</div>':'')+(sh.phone?'<div class="inf">Tél : '+esc(sh.phone)+'</div>':'')+(sh.address?'<div class="ad">Adresse : '+esc(sh.address)+'</div>':'')+'</div>'+
+   '<div class="tt"><b>'+titre+'</b><div><div style="text-align:right;font-size:13px">Date : '+fdate(s.date)+'</div><div class="no">N° '+String(s.no).padStart(6,'0')+'</div></div></div>'+
+   '<div class="cl">'+(s.client?esc(s.client):'Client : ………………………')+(tel?' &nbsp;·&nbsp; Tél : '+esc(tel):'')+'</div>'+
+   '<table><tr><th style="width:12%">QTÉ</th><th>DÉSIGNATION</th><th style="width:18%">P. UNIT</th><th style="width:19%">P. TOTAL</th></tr>'+
+   s.lines.map(l=>'<tr><td class="c">'+qty(l.qty)+(l.unit&&!['pièce','carton'].includes(l.unit)?' '+esc(l.unit):'')+'</td><td>'+esc(l.name)+'</td><td class="n">'+fmt(l.price)+'</td><td class="n">'+fmt(l.qty*l.price)+'</td></tr>').join('')+
+   '<tr class="tot"><td colspan="3" style="text-align:right">TOTAL</td><td class="n">'+fmt(s.total)+' F</td></tr>'+
+   (!isQ&&reste>0?'<tr><td colspan="3" style="text-align:right">Payé ('+esc(s.mode||'')+')</td><td class="n">'+fmt(s.paid)+' F</td></tr><tr><td colspan="3" style="text-align:right;font-weight:800;color:#C0392B">RESTE À PAYER</td><td class="n" style="font-weight:800;color:#C0392B">'+fmt(reste)+' F</td></tr>':'')+
+   '</table><div class="let">Arrêté'+(isQ?' le présent devis':'e la présente facture')+' à la somme de :<br><b>'+enLettres(s.total)+' francs CFA</b></div>'+
+   (isQ?'<div class="let" style="color:#555">Devis valable 7 jours. Prix susceptibles de changer après.</div>':'')+
+   '<div class="sig"><span>Le client</span><span>'+esc(sh.owner||sh.name||'')+'</span></div></div>';}
+{const _sd3=showDoc;showDoc=function(kind,s){_sd3.apply(this,arguments);if(!s||(kind!=='q'&&kind!=='s'))return;const box=document.querySelector('#sheetRoot .stack');if(!box)return;
+  const d=document.createElement('div');d.innerHTML='<button class="btn" data-act="docA4" data-k="'+kind+'" data-id="'+s.id+'">📄 '+(kind==='q'?'Devis':'Facture')+' A4 (PDF, avec tableau)</button>';box.insertBefore(d.firstChild,box.children[1]||null);};}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act="docA4"]');if(!b||!S)return;const k=b.dataset.k;const s=(k==='q'?S.quotes:S.sales).find(x=>x.id===b.dataset.id);if(s)printHTML(docA4(k,s));});
+
 // Essai sans compte : boutique d'exemple, rien n'est enregistré (ni sur le téléphone ni en ligne)
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');if(!b)return;
   if(b.dataset.xdemo==='1'){demoPick();}
