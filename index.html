@@ -994,9 +994,14 @@ function prImgHTML(){return PIMG?'<img class="photo-prev" src="'+esc(PIMG)+'" al
 function updImgBox(){const b=$('prImgBox');if(b)b.innerHTML=prImgHTML();}
 async function lookupOFF(code){const msg=t=>{const e=$('offMsg');if(e){e.textContent=t;e.hidden=!t;}};
   if(!/^\d{8,14}$/.test(code)||navigator.onLine===false)return;msg('Recherche du produit sur internet…');
-  try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),9000);
-    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields=product_name,product_name_fr,brands,quantity,image_front_small_url,image_front_url',{signal:ac.signal});clearTimeout(to);
-    const j=await r.json();const pr=j&&j.status===1&&j.product;if(!pr){msg('Produit pas trouvé sur internet : écrivez le nom.');return;}
+  try{/* aliments, puis beauté (crèmes, savons, parfums…), puis autres produits ; beauté d'abord pour cosmétiques et pharmacie */
+    const bt=typeof btype==='function'?btype():'';
+    const sites=(bt==='cosm'||bt==='phar')?['openbeautyfacts','openfoodfacts','openproductsfacts']:['openfoodfacts','openbeautyfacts','openproductsfacts'];
+    let pr=null;
+    for(const st of sites){try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),7000);
+      const r=await fetch('https://world.'+st+'.org/api/v2/product/'+code+'.json?fields=product_name,product_name_fr,brands,quantity,image_front_small_url,image_front_url',{signal:ac.signal});clearTimeout(to);
+      const j=await r.json();if(j&&j.status===1&&j.product&&(j.product.product_name||j.product.product_name_fr||j.product.image_front_small_url||j.product.image_front_url)){pr=j.product;break;}}catch(e){}}
+    if(!pr){msg('Produit pas trouvé sur internet : écrivez le nom.');return;}
     const dec=x=>{const t=document.createElement('textarea');t.innerHTML=String(x||'');return t.value.replace(/\s+/g,' ').trim();};let n=dec(pr.product_name_fr||pr.product_name);const br=dec((pr.brands||'').split(',')[0]);const qt=dec(pr.quantity);
     if(br&&n&&!n.toLowerCase().includes(br.toLowerCase()))n=n+' '+br;if(qt&&n&&!n.toLowerCase().includes(qt.toLowerCase()))n=n+' '+qt;
     const f=$('prName');if(n&&f&&!f.value.trim())f.value=n;
