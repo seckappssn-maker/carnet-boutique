@@ -1006,7 +1006,11 @@ async function lookupOFF(code){const msg=t=>{const e=$('offMsg');if(e){e.textCon
     if(br&&n&&!n.toLowerCase().includes(br.toLowerCase()))n=n+' '+br;if(qt&&n&&!n.toLowerCase().includes(qt.toLowerCase()))n=n+' '+qt;
     const f=$('prName');if(n&&f&&!f.value.trim())f.value=n;
     const iu=pr.image_front_small_url||pr.image_front_url;
-    if(iu&&!PIMG){try{const b=await (await fetch(iu)).blob();PIMG=await shrink(b,260);}catch(e){PIMG=iu;}updImgBox();}
+    if(typeof PPH!=='undefined'&&PPH){/* articles à plusieurs photos (mode, cosmétiques…) : la photo trouvée devient la 1re */
+      const cur=PPH,big=pr.image_front_url||iu;
+      if(big&&!cur.photos.length&&!cur.busy){let b=null;try{const r=await fetch(big);if(r.ok)b=await r.blob();}catch(e){}
+        if(PPH===cur&&!cur.photos.length&&!cur.busy){if(b&&b.size)await pphAdd([b]);else{cur.photos.push(big);PIMG=iu||big;updImgBox();}}}}
+    else if(iu&&!PIMG){try{const b=await (await fetch(iu)).blob();PIMG=await shrink(b,260);}catch(e){PIMG=iu;}updImgBox();}
     msg(n?'Trouvé sur internet : vérifiez le nom et le prix.':'Produit trouvé sans nom : écrivez-le.');}
   catch(e){msg('');}}
 
