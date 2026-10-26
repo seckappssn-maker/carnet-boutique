@@ -348,6 +348,15 @@ html.cx-lock .wrap{max-width:1200px;padding-inline:max(16px,env(safe-area-inset-
 .btc b{display:block;font-size:16px}.btc small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.35}
 .btc .bte{font-size:26px;line-height:1}
 .btc[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+/* Facture / Devis rapide (Quincaillerie) */
+.fq-ln{display:grid;grid-template-columns:70px 1fr auto 44px;gap:6px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.fq-ln .nm{grid-column:1/4}
+.fq-ln .fq-x{grid-column:4;grid-row:1}
+.fq-ln .lt{grid-column:3/5;text-align:right;font-weight:700;white-space:nowrap;font-size:15px;min-width:70px}
+.fq-x{border:0;background:var(--danger-soft);color:var(--danger);border-radius:10px;height:46px;font-weight:800;font-size:16px;cursor:pointer}
+.fq-tot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:4px;font-weight:700}
+.fq-tot b{font-family:var(--display);font-size:28px;color:var(--accent)}
+#fqList .row[hidden]{display:none}
 </style>
 
 <div id="app"></div>
@@ -713,9 +722,9 @@ const MORE_TABS=['more','quotes','sup','exp','report','set','web','cmd','liv'];
 function render(){const app=$('app');if(BOOTING){app.innerHTML='<div class="wrap"><div class="empty" style="padding-top:40vh">Chargement…</div></div>';return;}if(SB&&!USER&&!XDEMO){app.innerHTML=vLogin();return;}if(!S){app.innerHTML=onboard();return;}
   const L=licState();
   const chip=L.st==='blocked'?'<button class="chip bad" data-act="goSub">Abonnement expiré</button>':L.st==='grace'?'<button class="chip bad" data-act="goSub">Expiré · '+(GRACE_DAYS+L.left)+' j</button>':L.st==='warn'?'<button class="chip warn" data-act="goSub">'+(L.trial?'Essai':'Abonné')+' · '+L.left+' j</button>':'<button class="chip ok" data-act="goSub">'+(L.trial?'Essai gratuit':'Abonné')+'</button>';
-  const V={home:vHome,sell:vSell,debt:vDebt,stock:vStock,more:vMore,quotes:vQuotes,sup:vSup,exp:vExp,report:vReport,set:vSet,web:vWeb,cmd:vCmd,liv:vLiv}[tab]||vHome;
+  const V={home:vHome,sell:vSell,debt:vDebt,stock:vStock,more:vMore,quotes:vQuotes,sup:vSup,exp:vExp,report:vReport,set:vSet,web:vWeb,cmd:vCmd,liv:vLiv,fact:vFact}[tab]||vHome;
   app.innerHTML='<div class="wrap"><header class="top">'+(SB&&USER&&!XDEMO?'<button type="button" class="brand brandbtn" data-act="actOpen" aria-label="Mes activités">'+esc(S.shop.name)+((ACTS||[]).length?' <span class="brandv">▾</span>':'')+'</button>':'<div class="brand">'+esc(S.shop.name)+'</div>')+'<div style="display:flex;gap:6px;align-items:center">'+(USER?'<span id="syncDot" class="sync '+syncSt+'">'+(syncSt==='ok'?'☁ ✓':syncSt==='err'?'☁ !':'☁ …')+'</span>':'')+webCmdBtn()+langBtn()+chip+'</div></header>'+banner(L)+V()+'</div>'+
-  '<nav class="tabs">'+TABS.map(([k,l])=>'<button data-tab="'+k+'" aria-current="'+(tab===k||(k==='more'&&MORE_TABS.includes(tab)))+'">'+svg(k)+l+'</button>').join('')+'</nav>';
+  '<nav class="tabs">'+TABS.map(([k,l])=>'<button data-tab="'+k+'" aria-current="'+(tab===k||(k==='more'&&MORE_TABS.includes(tab))||(k==='home'&&tab==='fact'))+'">'+svg(k)+l+'</button>').join('')+'</nav>';
   if(tab==='sell')renderResults();}
 function banner(L){
   if(L.st==='blocked')return '<div class="banner bad"><b>Votre abonnement est terminé.</b><span>Vous pouvez voir vos données et faire une sauvegarde, mais plus enregistrer. Payez '+PRIX_MOIS+'/mois à '+SUPPORT_NAME+' pour continuer.</span><button class="btn sm danger" data-act="goSub">Payer l\'abonnement</button></div>';
@@ -746,7 +755,7 @@ function vHome(){const t=effToday();const today=S.sales.filter(s=>s.date.slice(0
   '<button class="stat debt" style="text-align:left;cursor:pointer" data-tab="debt"><div class="k">Crédits dehors</div><div class="v">'+F(dettes)+'</div><div class="small">'+(late.length?'<span style="color:var(--danger);font-weight:700">'+late.length+' en retard</span>':S.clients.filter(c=>balance(c.id)>0).length+' client(s)')+'</div></button>'+
   '<button class="stat" style="text-align:left;cursor:pointer" data-tab="stock"><div class="k">À racheter</div><div class="v" style="color:'+(low.length?'var(--danger)':'inherit')+'">'+low.length+'</div><div class="small">article(s) presque fini(s)</div></button></div>'+
   (exOut||exSoon?'<button class="banner '+(exOut?'bad':'warn')+'" data-tab="stock" style="width:100%;border:0;text-align:left;cursor:pointer;margin-top:12px;font:inherit"><b>Dates de péremption</b>'+(exOut?'<span>'+exOut+' article(s) périmé(s)</span>':'')+(exSoon?'<span>'+exSoon+' article(s) bientôt périmé(s)</span>':'')+'<span class="small" style="color:inherit">Voir dans Stock</span></button>':'')+
-  '<div class="grid2" style="margin-top:14px"><button class="btn" data-tab="sell">Nouvelle vente</button><button class="btn ghost" data-act="scanSellGo">'+svg('scan')+'Scanner</button></div>'+
+  '<div class="grid2" style="margin-top:14px"><button class="btn" data-tab="sell">Nouvelle vente</button><button class="btn ghost" data-act="scanSellGo">'+svg('scan')+'Scanner</button></div>'+(fqOn()?'<button class="btn ghost" style="margin-top:10px;padding:16px;font-size:17px" data-tab="fact">📄 Facture / Devis</button>':'')+
   '<button class="btn line" style="margin-top:10px;padding:16px;font-size:17px" data-act="restock">'+svg('stock')+'+ Stock : marchandise arrivée</button>'+
   '<button class="btn line" style="margin-top:10px;padding:16px;font-size:17px" data-act="cloture">'+svg('wallet')+'Clôture de caisse</button>'+
   '<h3>Dernières factures</h3>'+(recent.length?'<div class="list">'+recent.map(s=>'<button class="row" data-act="showSale" data-id="'+s.id+'"><div class="main"><div class="t">N° '+no4(s.no)+' · '+esc(s.client||'Client comptant')+'</div><div class="s">'+fdate(s.date)+' '+s.date.slice(11,16)+' · '+esc(s.mode)+'</div></div><div class="amt'+(s.total>s.paid?' debt':'')+'">'+F(s.total)+'</div></button>').join('')+'</div>':'<div class="list"><div class="empty">Aucune facture. Appuyez sur « Nouvelle vente » pour faire la première.</div></div>')+a2hsCard(false);}
@@ -2369,6 +2378,135 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-xdemo]');i
   d.innerHTML='<b>👀 Boutique d\'exemple : rien n\'est enregistré</b><button class="btn" type="button" data-xdemo="0">Créer mon compte</button>';w0.insertBefore(d,w0.children[1]||null);}}return x;};}
 
 {const _r=render;render=function(){const x=_r.apply(this,arguments);setTimeout(()=>{fillPush();pushResync()},0);return x}}
+
+
+/* ===== Facture / Devis rapide — seulement pour le type Quincaillerie =====
+   Un écran à part, comme l'ancienne app « Factures » : client, articles, total, avance.
+   Ne touche pas au stock, ni aux ventes, ni aux crédits. Enregistré dans S.fq (sauvegarde en ligne avec le reste). */
+var FQ=null,FQ_KEY='';
+function fqOn(){return !!S&&typeof btype==='function'&&btype()==='quinc';}
+function fqData(){if(!S.fq||typeof S.fq!=='object')S.fq={};const d=S.fq;
+  if(!d.next||typeof d.next!=='object')d.next={f:1,q:1};if(!Array.isArray(d.list))d.list=[];return d;}
+function fqLine(){return {qty:'1',name:'',price:''};}
+function fqBlank(k){k=k==='q'?'q':'f';return {id:'',k,no:String(fqData().next[k]||1),date:todayISO(),client:'',phone:'',lines:[fqLine()],avance:'',dirty:false};}
+function fqEdit(r){return {id:r.id,k:r.k,no:String(r.no),date:r.date,client:r.client||'',phone:r.phone||'',
+  lines:(r.lines.length?r.lines:[{qty:1,name:'',price:0}]).map(l=>({qty:String(l.qty),name:l.name,price:String(l.price||'')})),avance:r.avance?String(r.avance):'',dirty:false};}
+function fqGood(x){return x.lines.filter(l=>String(l.name).trim()&&num(l.qty)>0);}
+function fqTotal(x){return x.lines.reduce((a,l)=>a+num(l.qty)*num(l.price),0);}
+function fqHas(x){return !!(x&&(x.client.trim()||x.lines.some(l=>String(l.name).trim()||num(l.price))));}
+function fqDoc(x){const lines=fqGood(x).map(l=>({qty:num(l.qty),name:String(l.name).trim(),price:num(l.price),unit:''}));
+  const total=lines.reduce((a,l)=>a+l.qty*l.price,0),av=x.k==='f'?num(x.avance):0;
+  return {no:parseInt(x.no,10)||1,date:x.date||todayISO(),client:(x.client||'').trim(),phone:(x.phone||'').trim(),lines,total,paid:av>0?Math.min(av,total):total,mode:'Avance'};}
+function fqCur(){const key=(ACT||'main');if(FQ_KEY!==key){FQ_KEY=key;FQ=null;}if(!FQ)FQ=fqBlank('f');return FQ;}
+
+function vFact(){if(!fqOn()){tab='home';return vHome();}
+  const x=fqCur(),d=fqData(),isQ=x.k==='q',t=fqTotal(x),rest=Math.max(0,t-num(x.avance));
+  const names=[...new Set(S.products.map(p=>p.name).concat(d.list.flatMap(f=>f.lines.map(l=>l.name))))].filter(Boolean).slice(0,500);
+  const saved=d.list.filter(f=>f.k===x.k).slice().reverse();
+  const lt=l=>{const v=num(l.qty)*num(l.price);return v?F(v):'';};
+  return '<button class="back" data-tab="home">‹ Accueil</button><h2>Facture / Devis</h2>'+
+  '<div class="small" style="margin:-4px 0 12px">Ne touche pas au stock ni aux ventes.</div>'+
+  '<div class="seg" style="margin-bottom:12px"><button type="button" class="segb" data-fq="kind" data-k="f" aria-pressed="'+!isQ+'">Facture</button><button type="button" class="segb" data-fq="kind" data-k="q" aria-pressed="'+isQ+'">Devis / proforma</button></div>'+
+  '<div class="card stack">'+
+   (x.id?'<div class="banner warn" style="margin:0"><span>'+(isQ?'Devis N° '+esc(x.no)+' enregistré. Vous pouvez le modifier.':'Facture N° '+esc(x.no)+' enregistrée. Vous pouvez la modifier.')+'</span></div>':'')+
+   '<div class="grid2"><label class="f">N°<input data-fqi="no" inputmode="numeric" value="'+esc(x.no)+'"></label><label class="f">Date<input type="date" data-fqi="date" value="'+esc(x.date)+'"></label></div>'+
+   '<label class="f">Client<input data-fqi="client" list="fqCli" autocomplete="off" value="'+esc(x.client)+'" placeholder="Nom du client"></label>'+
+   '<datalist id="fqCli">'+S.clients.map(c=>'<option value="'+esc(c.name)+'">').join('')+'</datalist>'+
+   '<label class="f">Téléphone<input data-fqi="phone" inputmode="tel" value="'+esc(x.phone)+'" placeholder="77…"></label>'+
+   '<div><div class="small" style="font-weight:700">Articles</div>'+
+   x.lines.map((l,i)=>'<div class="fq-ln">'+
+     '<input class="nm" data-fqi="name" data-i="'+i+'" list="fqArt" autocomplete="off" value="'+esc(l.name)+'" placeholder="Article">'+
+     '<button type="button" class="fq-x" data-fq="del" data-i="'+i+'" aria-label="Enlever cet article">✕</button>'+
+     '<input data-fqi="qty" data-i="'+i+'" inputmode="decimal" value="'+esc(l.qty)+'" placeholder="Qté">'+
+     '<input data-fqi="price" data-i="'+i+'" inputmode="numeric" value="'+esc(l.price)+'" placeholder="Prix unit.">'+
+     '<div class="lt" id="fqLt'+i+'">'+lt(l)+'</div></div>').join('')+
+   '<datalist id="fqArt">'+names.map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist>'+
+   '<button type="button" class="btn line sm" style="margin-top:10px" data-fq="add">+ Ajouter un article</button></div>'+
+   '<div class="fq-tot"><span>TOTAL</span><b id="fqTot">'+F(t)+'</b></div>'+
+   (isQ?'':'<div class="grid2"><label class="f">Avance payée (F)<input data-fqi="avance" inputmode="numeric" value="'+esc(x.avance)+'" placeholder="0"></label><label class="f">Reste à payer<input id="fqRest" disabled value="'+(num(x.avance)?F(rest):'—')+'"></label></div>')+
+   '<button type="button" class="btn" data-fq="save">Enregistrer</button>'+
+   '<button type="button" class="btn ghost" data-fq="pdf">📄 '+(isQ?'Devis':'Facture')+' A4 (PDF, avec tableau)</button>'+
+   '<button type="button" class="btn line" data-fq="wa">Envoyer sur WhatsApp (texte)</button>'+
+   (x.id&&isQ?'<button type="button" class="btn line" data-fq="toF">Le client accepte : faire la facture</button>':'')+
+   '<div class="grid2"><button type="button" class="btn line" data-fq="new">+ Nouvelle</button>'+(x.id?'<button type="button" class="btn line" style="color:var(--danger)" data-fq="askDel">🗑 Supprimer</button>':'<span></span>')+'</div>'+
+   '<div id="fqMsg"></div>'+
+  '</div>'+
+  '<h3>'+(isQ?'Devis enregistrés':'Factures enregistrées')+' ('+saved.length+')</h3>'+
+  (saved.length>5?'<input data-fqi="search" placeholder="Chercher : client ou N°" style="margin-bottom:8px">':'')+
+  (saved.length?'<div class="list" id="fqList">'+saved.map((f,j)=>{const tt=fqTotal(f),r=f.k==='f'&&num(f.avance)>0?Math.max(0,tt-num(f.avance)):0;
+    return '<button type="button" class="row" data-fq="open" data-id="'+esc(f.id)+'" data-s="'+esc((f.no+' '+(f.client||'')).toLowerCase())+'"'+(j>=80?' hidden':'')+'><div class="main"><div class="t">N° '+esc(f.no)+' · '+esc(f.client||'Client')+'</div><div class="s">'+fdate(f.date)+(r>0?' · reste '+F(r):'')+'</div></div><div class="amt'+(r>0?' debt':'')+'">'+F(tt)+'</div></button>';}).join('')+'</div>'
+   :'<div class="list"><div class="empty">Rien pour l\'instant.</div></div>');}
+
+function fqRefresh(){const x=FQ;if(!x)return;const t=fqTotal(x);const a=$('fqTot');if(a)a.textContent=F(t);
+  x.lines.forEach((l,i)=>{const e=$('fqLt'+i);if(e){const v=num(l.qty)*num(l.price);e.textContent=v?F(v):'';}});
+  const r=$('fqRest');if(r)r.value=num(x.avance)?F(Math.max(0,t-num(x.avance))):'—';}
+function fqMsg(html){const m=$('fqMsg');if(m)m.innerHTML=html;}
+
+function fqSave(quiet){const x=FQ;if(!x||!w())return false;
+  if(!fqGood(x).length){toast('Ajoutez au moins un article (nom et quantité)');return false;}
+  const d=fqData(),no=parseInt(String(x.no).replace(/\D/g,''),10);
+  if(!no){toast('Mettez le numéro');return false;}
+  if(d.list.some(f=>f.k===x.k&&f.no===no&&f.id!==x.id)){toast('Le N° '+no+' existe déjà. Changez le numéro.');return false;}
+  const rec={id:x.id||uid(),k:x.k,no,date:x.date||todayISO(),client:x.client.trim(),phone:x.phone.trim(),
+    lines:fqGood(x).map(l=>({qty:q2(num(l.qty)),name:String(l.name).trim(),price:num(l.price)})),avance:x.k==='f'?num(x.avance):0,at:nowStamp()};
+  const i=d.list.findIndex(f=>f.id===rec.id);if(i>=0)d.list[i]=rec;else d.list.push(rec);
+  if(no>=(d.next[rec.k]||1))d.next[rec.k]=no+1;
+  FQ=fqEdit(rec);save();render();
+  if(!quiet)toast((rec.k==='q'?'Devis':'Facture')+' N° '+no+' enregistré'+(rec.k==='q'?'':'e')+' ✅');
+  return true;}
+
+function fqWaText(x){const D=fqDoc(x),sh=S.shop||{},isQ=x.k==='q';
+  let m='*'+(isQ?'DEVIS / PROFORMA':'FACTURE')+' N° '+D.no+'*\n'+(sh.name||'')+(sh.phone?'\nTél : '+sh.phone:'')+'\nDate : '+fdate(D.date)+(D.client?'\nClient : '+D.client:'')+'\n';
+  D.lines.forEach(l=>{m+='\n'+String(q2(l.qty)).replace('.',',')+' x '+l.name+' : '+F(l.qty*l.price);});
+  m+='\n\n*TOTAL : '+F(D.total)+' CFA*';
+  if(!isQ&&num(x.avance)>0)m+='\nAvance : '+F(Math.min(num(x.avance),D.total))+'\nReste à payer : '+F(Math.max(0,D.total-num(x.avance)));
+  if(isQ)m+='\n\nDevis valable 7 jours.';
+  return m+'\n\nMerci pour votre confiance 🙏';}
+
+document.addEventListener('input',e=>{const el=e.target&&e.target.closest?e.target.closest('[data-fqi]'):null;if(!el||!FQ||tab!=='fact')return;
+  const k=el.dataset.fqi,v=el.value;
+  if(k==='search'){const q=v.trim().toLowerCase();let n=0;document.querySelectorAll('#fqList [data-s]').forEach(r=>{const ok=!q||r.dataset.s.includes(q);r.hidden=!ok||(!q&&n>=80);if(ok)n++;});return;}
+  if(k==='qty'||k==='name'||k==='price'){const i=+el.dataset.i,l=FQ.lines[i];if(!l)return;l[k]=v;
+    if(k==='name'&&!num(l.price)){const n=v.trim().toLowerCase(),p=n&&S.products.find(p=>String(p.name).toLowerCase()===n);
+      let pr=p?num(p.price):0;if(!pr&&n){const old=fqData().list.slice().reverse().flatMap(f=>f.lines).find(o=>String(o.name).toLowerCase()===n);if(old)pr=num(old.price);}
+      if(pr){l.price=String(pr);const pi=document.querySelector('[data-fqi="price"][data-i="'+i+'"]');if(pi)pi.value=l.price;}}}
+  else if(k in FQ)FQ[k]=v;
+  FQ.dirty=true;fqRefresh();});
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-fq]');if(!b||!S)return;const a=b.dataset.fq;
+  if(a!=='kind'&&a!=='open'&&a!=='noNew'&&a!=='okNew'&&!FQ)return;
+  if(a==='kind'){const k=b.dataset.k,x=fqCur();if(x.k===k)return;
+    if(!x.id&&fqHas(x)){x.k=k;x.no=String(fqData().next[k]||1);if(k==='q')x.avance='';}else FQ=fqBlank(k);
+    render();return;}
+  if(a==='add'){FQ.lines.push(fqLine());FQ.dirty=true;render();const ins=document.querySelectorAll('[data-fqi="name"]');const last=ins[ins.length-1];if(last)last.focus();return;}
+  if(a==='del'){const i=+b.dataset.i;if(FQ.lines.length>1)FQ.lines.splice(i,1);else FQ.lines=[fqLine()];FQ.dirty=true;render();return;}
+  if(a==='save'){fqSave(false);return;}
+  if(a==='pdf'){if(!fqGood(FQ).length){toast('Ajoutez au moins un article (nom et quantité)');return;}
+    const ok=canWrite()?fqSave(true):(FQ.id&&!FQ.dirty);if(!ok){if(!canWrite())w();return;}
+    printHTML(docA4(FQ.k,fqDoc(FQ)));return;}
+  if(a==='wa'){if(!fqGood(FQ).length){toast('Ajoutez au moins un article (nom et quantité)');return;}
+    if(canWrite()&&FQ.dirty&&!fqSave(true))return;
+    const url=waLink(FQ.phone,fqWaText(FQ));const win=window.open(url,'_blank');if(!win)location.href=url;return;}
+  if(a==='toF'){const r=FQ;FQ={id:'',k:'f',no:String(fqData().next.f||1),date:todayISO(),client:r.client,phone:r.phone,lines:r.lines.map(l=>({...l})),avance:'',dirty:true};
+    render();scrollTo(0,0);toast('Vérifiez puis appuyez sur Enregistrer');return;}
+  if(a==='new'){if(FQ.dirty&&fqHas(FQ)){fqMsg('<div class="banner warn" style="margin:0"><span>Ce qui n\'est pas enregistré sera effacé.</span><div class="grid2"><button type="button" class="btn sm danger" style="width:100%" data-fq="okNew">Effacer</button><button type="button" class="btn sm line" style="width:100%" data-fq="noNew">Annuler</button></div></div>');return;}
+    FQ=fqBlank(FQ.k);render();scrollTo(0,0);return;}
+  if(a==='okNew'){FQ=fqBlank(FQ?FQ.k:'f');render();scrollTo(0,0);return;}
+  if(a==='noNew'||a==='noDel'){fqMsg('');return;}
+  if(a==='open'){const r=fqData().list.find(f=>f.id===b.dataset.id);if(!r)return;FQ_KEY=(ACT||'main');FQ=fqEdit(r);render();scrollTo(0,0);return;}
+  if(a==='askDel'){if(!w())return;fqMsg('<div class="banner bad" style="margin:0"><span>Supprimer '+(FQ.k==='q'?'ce devis':'cette facture')+' N° '+esc(FQ.no)+' ?</span><div class="grid2"><button type="button" class="btn sm danger" style="width:100%" data-fq="okDel">Oui, supprimer</button><button type="button" class="btn sm line" style="width:100%" data-fq="noDel">Non</button></div></div>');return;}
+  if(a==='okDel'){if(!w())return;const d=fqData(),k=FQ.k;d.list=d.list.filter(f=>f.id!==FQ.id);save();FQ=fqBlank(k);render();scrollTo(0,0);toast('Supprimé');return;}
+});
+
+Object.assign(WO,{
+  "Facture / Devis":"Faktiir / Devis","📄 Facture / Devis":"📄 Faktiir / Devis","‹ Accueil":"‹ Kër gi",
+  "Ne touche pas au stock ni aux ventes.":"Stock bi ak jaay yi du soppiku.",
+  "Prix unit.":"Njëg",
+  "+ Ajouter un article":"+ Yokk benn marsandiis","Avance payée (F)":"Avance bi mu fey (F)","Reste à payer":"Li des",
+  "Envoyer sur WhatsApp (texte)":"Yónnee ci WhatsApp (bind)","+ Nouvelle":"+ Bu bees","🗑 Supprimer":"🗑 Far",
+  "Factures enregistrées":"Faktiir yi nga denc","Devis enregistrés":"Devis yi nga denc",
+  "Le client accepte : faire la facture":"Kiliyaan bi nangu na : def faktiir bi","Chercher : client ou N°":"Seet : kiliyaan walla N°",
+});
 
 </script>
 
