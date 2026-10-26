@@ -2364,7 +2364,7 @@ function docA4(kind,s){const sh=S.shop||{},c=s.clientId?client(s.clientId):null,
    '<div class="sig"><span>Le client</span><span>'+esc(sh.owner||sh.name||'')+'</span></div></div>';}
 {const _sd3=showDoc;showDoc=function(kind,s){_sd3.apply(this,arguments);if(!s||(kind!=='q'&&kind!=='s'))return;const box=document.querySelector('#sheetRoot .stack');if(!box)return;
   const d=document.createElement('div');d.innerHTML='<button class="btn" data-act="docA4" data-k="'+kind+'" data-id="'+s.id+'">📄 '+(kind==='q'?'Devis':'Facture')+' A4 (PDF, avec tableau)</button>';box.insertBefore(d.firstChild,box.children[1]||null);};}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-act="docA4"]');if(!b||!S)return;const k=b.dataset.k;const s=(k==='q'?S.quotes:S.sales).find(x=>x.id===b.dataset.id);if(s)printHTML(docA4(k,s));});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act="docA4"]');if(!b||!S)return;const k=b.dataset.k;const s=(k==='q'?S.quotes:S.sales).find(x=>x.id===b.dataset.id);if(s){if(btype()==='quinc')fqClassicPdf(k,s);else printHTML(docA4(k,s));}});
 
 // Exemple sans compte : montrer la page des clients (exemple adapté au type)
 {const _wl=webLinkCard;webLinkCard=function(full){if(!XDEMO)return _wl.apply(this,arguments);
@@ -2430,7 +2430,7 @@ function vFact(){if(!fqOn()){tab='home';return vHome();}
    (x.id&&isQ?'<button type="button" class="btn line" data-fq="toF">Le client accepte : faire la facture</button>':'')+
    '<div class="grid2"><button type="button" class="btn line" data-fq="new">+ Nouvelle</button>'+(x.id?'<button type="button" class="btn line" style="color:var(--danger)" data-fq="askDel">🗑 Supprimer</button>':'<span></span>')+'</div>'+
    '<div id="fqMsg"></div>'+
-  '</div>'+
+  '</div>'+fqHdHTML()+
   '<h3>'+(isQ?'Devis enregistrés':'Factures enregistrées')+' ('+saved.length+')</h3>'+
   (saved.length>5?'<input data-fqi="search" placeholder="Chercher : client ou N°" style="margin-bottom:8px">':'')+
   (saved.length?'<div class="list" id="fqList">'+saved.map((f,j)=>{const tt=fqTotal(f),r=f.k==='f'&&num(f.avance)>0?Math.max(0,tt-num(f.avance)):0;
@@ -2483,7 +2483,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-fq]');if(!
   if(a==='save'){fqSave(false);return;}
   if(a==='pdf'){if(!fqGood(FQ).length){toast('Ajoutez au moins un article (nom et quantité)');return;}
     const ok=canWrite()?fqSave(true):(FQ.id&&!FQ.dirty);if(!ok){if(!canWrite())w();return;}
-    printHTML(docA4(FQ.k,fqDoc(FQ)));return;}
+    fqClassicPdf(FQ.k,fqDoc(FQ));return;}
   if(a==='wa'){if(!fqGood(FQ).length){toast('Ajoutez au moins un article (nom et quantité)');return;}
     if(canWrite()&&FQ.dirty&&!fqSave(true))return;
     const url=waLink(FQ.phone,fqWaText(FQ));const win=window.open(url,'_blank');if(!win)location.href=url;return;}
@@ -2498,6 +2498,87 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-fq]');if(!
   if(a==='okDel'){if(!w())return;const d=fqData(),k=FQ.k;d.list=d.list.filter(f=>f.id!==FQ.id);save();FQ=fqBlank(k);render();scrollTo(0,0);toast('Supprimé');return;}
 });
 
+/* ----- Quincaillerie : facture / devis A4 « classique » bleue, comme l'ancienne app Factures -----
+   Dessinée sur un canvas (même rendu sur iPhone et Android). Sert pour le bouton Facture / Devis
+   et pour les factures et devis A4 des ventes, seulement quand le type est Quincaillerie. */
+var FQ_ACT_DEF='Vente de tout matériel de construction';
+function fqHd(){const d=fqData();if(!d.hd||typeof d.hd!=='object')d.hd={};return d.hd;}
+function fqClassic(kind,s){const sh=S.shop||{},hd=fqHd(),isQ=kind==='q';
+  const BLUE='#1f6fd1',DARK='#1a3f8f',INK='#111',RED='#c62828',W=1240,M=60,RH=54;
+  const c0=s.clientId&&typeof client==='function'?client(s.clientId):null,ctel=(c0&&c0.phone)||s.phone||'';
+  const name=String(sh.name||'').toUpperCase(),sub=String(sh.owner||'').trim(),act=String(hd.act!==undefined?hd.act:FQ_ACT_DEF).trim(),
+    stel=String(hd.tel||sh.phone||'').trim(),adr=String(sh.address||'').trim();
+  const qtx=l=>{const v=q2(num(l.qty));let t=Number.isInteger(v)&&v<10&&v>=0?'0'+v:String(v).replace('.',',');if(l.unit&&!['pièce','carton'].includes(l.unit))t+=' '+l.unit;return t;};
+  const lines=(s.lines||[]).map(l=>({q:qtx(l),d:String(l.name||''),pu:num(l.price),t:num(l.qty)*num(l.price)}));
+  const total=typeof s.total==='number'?s.total:lines.reduce((a,l)=>a+l.t,0);
+  const paid=isQ?total:Math.min(num(s.paid),total),rest=Math.max(0,total-paid);
+  const fmt=n=>Math.round(n||0).toLocaleString('fr-FR').replace(/\s/g,' ');
+  let cl=String(s.client||'').trim();if(cl&&!/^(m\.|mme\b|mlle\b|mr\b|madame\b|monsieur\b)/i.test(cl))cl='M. '+cl;if(!cl)cl='Client : ………………………';
+  const cv=document.createElement('canvas'),x=cv.getContext('2d');
+  cv.width=W;cv.height=760+RH*(lines.length+2)+400;
+  const font=(sz,b)=>x.font=(b?'bold ':'')+sz+'px Arial, Helvetica, sans-serif';
+  const fit=(t,max,sz,b)=>{font(sz,b);while(x.measureText(t).width>max&&sz>14){sz--;font(sz,b);}return sz;};
+  const wrap=(t,max)=>{const w=String(t).split(' '),out=[];let l='';w.forEach(wd=>{const tt=l?l+' '+wd:wd;if(x.measureText(tt).width>max&&l){out.push(l);l=wd;}else l=tt;});if(l)out.push(l);return out;};
+  x.fillStyle='#fff';x.fillRect(0,0,W,cv.height);x.textBaseline='middle';
+  let y=60;x.textAlign='center';x.fillStyle=DARK;fit(name,W-2*M,50,true);x.fillText(name,W/2,y);
+  if(sub){y+=62;fit(sub,W-2*M-80,30,true);const sw=x.measureText(sub).width+60;x.fillStyle=BLUE;x.beginPath();
+    if(x.roundRect)x.roundRect(W/2-sw/2,y-24,sw,48,24);else x.rect(W/2-sw/2,y-24,sw,48);x.fill();x.fillStyle='#fff';x.fillText(sub,W/2,y+1);y+=16;}
+  x.fillStyle=DARK;
+  if(act){y+=36;fit(act,W-2*M,26,true);x.fillText(act,W/2,y);}
+  if(stel){y+=36;fit('Tél : '+stel,W-2*M,26,true);x.fillText('Tél : '+stel,W/2,y);}
+  if(adr){y+=34;fit('Adresse : '+adr,W-2*M,25);x.fillText('Adresse : '+adr,W/2,y);}
+  y+=60;x.textAlign='left';font(38,true);x.fillText(isQ?'DEVIS / PROFORMA':'FACTURE',M,y);
+  x.textAlign='right';font(26);x.fillStyle=INK;x.fillText('Date : '+fdate(s.date),W-M,y-18);
+  x.fillStyle=RED;font(32,true);x.fillText('N° '+String(s.no).padStart(6,'0'),W-M,y+20);
+  y+=66;x.textAlign='left';x.fillStyle=INK;const clt=cl+(ctel?'   ·   Tél : '+ctel:'');fit(clt,W-2*M,30);x.fillText(clt,M,y);
+  x.strokeStyle=DARK;x.lineWidth=1;x.setLineDash([4,5]);x.beginPath();x.moveTo(M,y+24);x.lineTo(W-M,y+24);x.stroke();x.setLineDash([]);
+  y+=50;const top=y,cuts=[];const cols=[M,M+120,W-M-420,W-M-210,W-M];
+  x.fillStyle='#e8f1fc';x.fillRect(M,y,W-2*M,RH);x.fillStyle=DARK;font(22,true);x.textAlign='center';
+  ['QTÉ','DÉSIGNATION','P. UNIT','P. TOTAL'].forEach((h,i)=>x.fillText(h,(cols[i]+cols[i+1])/2,y+RH/2));
+  y+=RH;x.fillStyle=INK;
+  lines.forEach(l=>{cuts.push(y);const m=y+RH/2;x.textAlign='center';fit(l.q,cols[1]-cols[0]-12,26);x.fillText(l.q,(cols[0]+cols[1])/2,m);
+    x.textAlign='left';fit(l.d,cols[2]-cols[1]-24,26);x.fillText(l.d,cols[1]+12,m);
+    x.textAlign='right';font(26);x.fillText(fmt(l.pu),cols[3]-12,m);x.fillText(fmt(l.t),cols[4]-12,m);y+=RH;});
+  cuts.push(y);x.fillStyle=DARK;font(30,true);x.textAlign='right';x.fillText('TOTAL',cols[3]-12,y+RH/2);x.fillText(fmt(total)+' F',cols[4]-12,y+RH/2);y+=RH;
+  x.strokeStyle='#9dbbe6';x.lineWidth=2;for(let r=top;r<=y+1;r+=RH){x.beginPath();x.moveTo(M,r);x.lineTo(W-M,r);x.stroke();}
+  cols.forEach((cx,i)=>{x.beginPath();x.moveTo(cx,top);x.lineTo(cx,i>0&&i<3?y-RH:y);x.stroke();});
+  x.strokeStyle=BLUE;x.lineWidth=3;x.strokeRect(M,top,W-2*M,y-top);x.strokeRect(M,y-RH,W-2*M,RH);
+  cuts.push(y);y+=40;x.textAlign='left';x.fillStyle=INK;font(26);
+  wrap((isQ?'Arrêté le présent devis':'Arrêtée la présente facture')+' à la somme de : '+enLettres(total)+' francs CFA',W-2*M).forEach(l=>{x.fillText(l,M,y);y+=36;});
+  if(!isQ&&rest>0){y+=8;font(27,true);x.fillText((s.mode==='Avance'?'Avance':'Payé')+' : '+fmt(paid)+' F   —   Reste à payer : '+fmt(rest)+' F',M,y);y+=42;}
+  if(isQ){y+=4;font(24);x.fillStyle='#555';x.fillText('Devis valable 7 jours. Prix susceptibles de changer après.',M,y);x.fillStyle=INK;y+=40;}
+  y+=70;font(24);x.fillText('Le client',M,y);x.textAlign='right';x.fillText(sub||String(sh.name||''),W-M,y);y+=50;
+  const out=document.createElement('canvas');out.width=W;out.height=Math.ceil(y);const o=out.getContext('2d');o.fillStyle='#fff';o.fillRect(0,0,W,out.height);o.drawImage(cv,0,0);
+  return {cv:out,cuts};}
+
+async function fqClassicPdf(kind,s){toast('Préparation…');
+  try{await loadLib('jspdf');}catch(e){toast('PDF impossible sans internet : connectez-vous une fois');return;}
+  try{const {cv,cuts}=fqClassic(kind,s),W=cv.width,H=cv.height,pageH=Math.floor(W*(277/190));
+    const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});let y0=0,first=true;
+    while(y0<H-2){let y1=Math.min(y0+pageH,H);if(y1<H){const c=cuts.filter(v=>v>y0+pageH*0.5&&v<=y0+pageH);if(c.length)y1=c[c.length-1];}
+      const pc=document.createElement('canvas');pc.width=W;pc.height=y1-y0;const cx=pc.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,W,pc.height);
+      cx.drawImage(cv,0,y0,W,pc.height,0,0,W,pc.height);
+      if(!first)doc.addPage();first=false;doc.addImage(pc.toDataURL('image/jpeg',0.92),'JPEG',10,10,190,(y1-y0)*190/W);y0=y1;}
+    const name=(kind==='q'?'Devis':'Facture')+'-'+String(s.no).padStart(6,'0')+'.pdf';
+    if(PDF){PDF.url&&URL.revokeObjectURL(PDF.url);PDF.iurl&&URL.revokeObjectURL(PDF.iurl);}
+    const blob=doc.output('blob');const img=await toBlob(cv,'image/png');
+    PDF={blob,name,url:URL.createObjectURL(blob),img,iname:name.replace(/\.pdf$/,'.png'),iurl:img?URL.createObjectURL(img):''};
+    openSheet('Aperçu','<div class="prev">'+(PDF.iurl?'<img src="'+PDF.iurl+'" alt="Aperçu">':'')+'</div>'+
+      '<div class="small" style="margin:8px 0 10px">Vérifiez, puis choisissez comment l\'envoyer.</div><div class="stack">'+
+      '<div class="grid2"><button class="btn" data-act="pdfShare">📄 Envoyer en PDF</button><button class="btn ghost" data-act="imgShare">🖼 Envoyer en image</button></div>'+
+      (DL?'':'<button class="btn line" data-act="pdfPrint">🖨 Imprimer</button>')+
+      '<div class="small">Le menu du téléphone s\'ouvre : choisissez WhatsApp, ou « Enregistrer dans Fichiers » / « Enregistrer l\'image ».</div></div>');}
+  catch(e){toast('PDF impossible : réessayez');}}
+
+/* En-tête de la facture bleue : ligne sous le nom et téléphones (enregistrés avec la boutique) */
+function fqHdHTML(){const hd=fqHd(),sh=S.shop||{};
+  return '<details class="more" style="margin-top:12px"><summary>En-tête de la facture</summary><div class="stack" style="margin-top:12px">'+
+   '<label class="f">Ligne sous le nom<input data-fqh="act" value="'+esc(hd.act!==undefined?hd.act:FQ_ACT_DEF)+'" placeholder="Ex : Vente de tout matériel de construction"></label>'+
+   '<label class="f">Téléphones sur la facture<input data-fqh="tel" inputmode="tel" value="'+esc(hd.tel||sh.phone||'')+'" placeholder="77 000 00 00 - 76 000 00 00"></label>'+
+   '<div class="small">Le nom, le nom dans le rond bleu (propriétaire) et l\'adresse se changent dans Plus › Réglages.</div></div></details>';}
+document.addEventListener('change',e=>{const el=e.target&&e.target.closest?e.target.closest('[data-fqh]'):null;if(!el||!S)return;
+  if(!w()){render();return;}fqHd()[el.dataset.fqh]=el.value.trim();save();toast('En-tête enregistré');});
+
 Object.assign(WO,{
   "Facture / Devis":"Faktiir / Devis","📄 Facture / Devis":"📄 Faktiir / Devis","‹ Accueil":"‹ Kër gi",
   "Ne touche pas au stock ni aux ventes.":"Stock bi ak jaay yi du soppiku.",
@@ -2505,7 +2586,8 @@ Object.assign(WO,{
   "+ Ajouter un article":"+ Yokk benn marsandiis","Avance payée (F)":"Avance bi mu fey (F)","Reste à payer":"Li des",
   "Envoyer sur WhatsApp (texte)":"Yónnee ci WhatsApp (bind)","+ Nouvelle":"+ Bu bees","🗑 Supprimer":"🗑 Far",
   "Factures enregistrées":"Faktiir yi nga denc","Devis enregistrés":"Devis yi nga denc",
-  "Le client accepte : faire la facture":"Kiliyaan bi nangu na : def faktiir bi","Chercher : client ou N°":"Seet : kiliyaan walla N°",
+  "Le client accepte : faire la facture":"Kiliyaan bi nangu na : def faktiir bi",
+  "En-tête de la facture":"Kaw faktiir bi","Ligne sous le nom":"Bind bi ci suufu tur bi","Téléphones sur la facture":"Telefon yi ci faktiir bi","Chercher : client ou N°":"Seet : kiliyaan walla N°",
 });
 
 </script>
