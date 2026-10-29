@@ -136,6 +136,12 @@ label.f input,label.f textarea{border:1.5px solid var(--line);background:var(--b
 .ftitle{font-weight:800;font-size:calc(var(--fs)*.8);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .err{color:var(--bad);font-weight:700}
 .send{border:0;border-radius:16px;background:var(--wa);color:#fff;font-weight:800;padding:16px;font-size:calc(var(--fs)*1.05);min-height:54px}
+.send.main{background:#0B6E5B;color:#fff;width:100%}
+.send.wa{background:transparent;color:var(--wa);border:2px solid var(--wa);font-size:var(--fs)}
+.send.ghost{background:transparent;color:var(--ink,inherit);border:1.5px solid var(--line);font-size:var(--fs);width:100%}
+.stbox{border-left:6px solid var(--sc);background:color-mix(in srgb,var(--sc) 13%,transparent);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;line-height:1.35}
+.stbox b{font-size:calc(var(--fs)*1.02)}
+.suivitop{margin:12px 0 4px}
 .big{width:100%;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:var(--yellow-soft)}
 .big.swipe{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .big.swipe::-webkit-scrollbar{display:none}
@@ -178,6 +184,7 @@ footer b{color:var(--ink)}
 </div></header>
 <div class="vit" id="vit" hidden></div>
 
+<div class="wrap" id="suiviTop"></div>
 <div class="bar"><div class="wrap">
   <input class="search" id="q" type="search" placeholder="Chercher un article" autocomplete="off">
   <div class="cats" id="cats" role="toolbar" aria-label="Rayons"></div>
@@ -256,7 +263,7 @@ function exPour(t){const e=EXS[t];if(!e)return EX;return Object.assign({},EX,{ph
 
 /* ---------- Langue ---------- */
 const WO={'Ma commande':'Sama komand','Ajouter':'Yokk','Épuisé':'Jeex na','Livraison':'Yóbbal','Votre nom':'Sa tur','Votre téléphone':'Sa telefon',
- 'Adresse ou repère':'Adrees walla màndarga','Total':'Lépp','Envoyer ma commande sur WhatsApp':'Yónnee sama komand ci WhatsApp','Fermer':'Tëj',
+ 'Adresse ou repère':'Adrees walla màndarga','Total':'Lépp','Envoyer ma commande sur WhatsApp':'Yónnee sama komand ci WhatsApp','Envoyer ma commande':'Yónnee sama komand','Fermer':'Tëj',
  'Votre panier est vide.':'Sa panier amul dara.','Vider':'Far lépp','Écrivez votre nom.':'Bindal sa tur.','Réessayer':'Jéemaatal',
  'Pas de connexion internet.':'Amul internet.','Lien introuvable.':'Lien bi amul.','Texte plus grand':'Bind bu gën a mag','Texte normal':'Bind bu yem','Français':'Wolof'};
 let LANG='fr';const t=s=>LANG==='wo'&&WO[s]?WO[s]:s;
@@ -365,35 +372,76 @@ function showCart(err){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(i
    ((D.paiements||[]).length&&!ART()?'<div class="ftitle">Paiement</div><div class="seg'+(D.paiements.length>2?' three':'')+'">'+D.paiements.map(p=>'<button type="button" data-pay="'+esc(p)+'" aria-pressed="'+(p===pay)+'">'+esc(p)+'</button>').join('')+'</div>':'')+
    '<label class="f">Note <span class="note">'+(ART()?'(dimensions, couleur, bois…)':'(taille, couleur…)')+'</span><textarea id="cNote" rows="2">'+esc(window._note||'')+'</textarea></label>'+
    (err?'<p class="err">'+esc(err)+'</p>':'')+
-   '<button class="send" type="button" id="sendWa">'+(ART()?'Envoyer ma demande sur WhatsApp':t('Envoyer ma commande sur WhatsApp'))+'</button>'+
-   '<p class="note">Le vendeur reçoit votre commande sur WhatsApp et vous répond pour confirmer. Les prix sont ceux de la boutique.</p>');}
+   '<button class="send main" type="button" id="sendWa">✓ '+(ART()?t('Envoyer ma demande'):t('Envoyer ma commande'))+'</button>'+
+   '<p class="note">La commande arrive directement chez le vendeur. Vous voyez ici quand elle est confirmée. Les prix sont ceux de la boutique.</p>');}
 function keep(){if($('cNom'))window._nom=$('cNom').value;if($('cTel'))window._tel=$('cTel').value;if($('cAdr'))window._adr=$('cAdr').value;if($('cNote'))window._note=$('cNote').value;}
 function message(no){const ls=Object.entries(cart).filter(([id,q])=>q>0&&art(id));
   return 'Bonjour '+D.nom.replace(/\s*\(exemple\)/,'')+', '+(ART()?'je voudrais un devis':'je veux commander')+(no?' ('+(ART()?'demande':'commande')+' N° '+no+')':'')+' :\n'+ls.map(([id,q])=>'• '+q+' × '+lname(id)+' = '+F(art(id).prix*q)).join('\n')+
    (frais()?'\nLivraison ('+ZONE+') : '+F(frais()):'')+'\n'+(ART()?'Prix indicatif : ':'Total : ')+F(total()+frais())+'\n\nNom : '+(window._nom||'').trim()+'\nTél : '+(window._tel||'').trim()+'\n'+(mode==='livraison'?'Livraison : '+(ZONE?ZONE+', ':'')+(window._adr||'').trim():'Je passe récupérer')+(pay?'\nPaiement : '+pay:'')+((window._note||'').trim()?'\nNote : '+window._note.trim():'');}
 let SENDING=false;
+function waNo(){let n=String(D.whatsapp||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.length===9)n='221'+n;return n.length>=11?n:'';}
 async function send(){if(SENDING)return;keep();if(!(window._nom||'').trim())return showCart(t('Écrivez votre nom.'));
   if(String(window._tel||'').replace(/\D/g,'').length<9)return showCart('Écrivez votre numéro de téléphone.');
   if(mode==='livraison'&&(D.zones||[]).length&&!zoneOf())return showCart('Choisissez la zone de livraison.');
   if(mode==='livraison'&&!(window._adr||'').trim())return showCart('Écrivez l\'adresse de livraison.');
-  if(DEMO){open('<div class="sh"><h2>Message envoyé au vendeur</h2><button class="x" type="button" data-close>×</button></div><p class="note">Dans l\'exemple rien n\'est envoyé. Dans la vraie boutique, la commande arrive dans l\'app du vendeur, son téléphone sonne, et WhatsApp s\'ouvre avec ce message :</p><div class="msg">'+esc(message(12))+'</div>');return;}
-  let n=String(D.whatsapp||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.length===9)n='221'+n;if(n.length<9)return showCart('Le vendeur n\'a pas encore mis son numéro WhatsApp.');
+  if(DEMO){SUIVI={no:12,tk:'demo',at:Date.now(),mode,devis:ART(),st:'nouveau',liv:null,demo:true};cart={};bar();list();envoyee();suivre();return;}
   SENDING=true;const b=$('sendWa');if(b){b.disabled=true;b.textContent='Envoi…';}
-  let no='';
+  let no='',tk='';
   try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),12000);
     const r=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_commande_public',{method:'POST',signal:ac.signal,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({p_code:CODE,p_cmd:{nom:window._nom.trim(),tel:String(window._tel).trim(),mode,adresse:(window._adr||'').trim(),paiement:pay,note:(window._note||'').trim(),zone:mode==='livraison'?ZONE:'',
         lignes:Object.entries(cart).filter(([id,q])=>q>0&&art(id)).map(([k,q])=>{const o=ckP(k);return o.t!=null?{id:o.id,q,vt:o.t,vc:o.c}:{id:o.id,q};})}})});
     clearTimeout(to);const j=await r.json();
-    if(j&&j.ok){no=String(j.no);
+    if(j&&j.ok){no=String(j.no);tk=j.tk||'';
       if(j.alerte){const txt='Nouvelle commande N° '+j.no+' · '+F(j.total)+' · '+window._nom.trim();const u='https://ntfy.sh/'+j.alerte;
         try{if(!(navigator.sendBeacon&&navigator.sendBeacon(u,txt)))fetch(u,{method:'POST',body:txt,keepalive:true,mode:'no-cors'}).catch(()=>{});}catch(e){}}}}
   catch(e){}
-  const m=message(no);cart={};bar();list();SENDING=false;
-  open('<div class="sh"><h2>'+(no?'Commande N° '+esc(no)+' envoyée':'Commande prête')+'</h2><button class="x" type="button" data-close>×</button></div>'+
-   '<p>'+(no?'Le vendeur a reçu votre commande. WhatsApp s\'ouvre pour lui envoyer le message.':'WhatsApp s\'ouvre : envoyez le message au vendeur.')+'</p>'+
-   '<a class="send" style="display:block;text-align:center;text-decoration:none" href="https://wa.me/'+n+'?text='+encodeURIComponent(m)+'">'+t('Envoyer ma commande sur WhatsApp')+'</a>');
-  setTimeout(()=>{location.href='https://wa.me/'+n+'?text='+encodeURIComponent(m);},400);}
+  SENDING=false;
+  if(no){WAMSG=message(no);SUIVI={no:+no,tk,at:Date.now(),mode,devis:ART(),st:'nouveau',liv:null};suiviSave();cart={};bar();list();envoyee();suivre();return;}
+  /* La commande n'est pas arrivée : on garde le panier, on propose de réessayer ou WhatsApp */
+  const n=waNo(),m=message('');
+  open('<div class="sh"><h2>Commande pas envoyée</h2><button class="x" type="button" data-close>×</button></div>'+
+   '<p class="err">La commande n\'est pas arrivée chez le vendeur. Vérifiez internet et réessayez.</p>'+
+   '<button class="send main" type="button" data-retry>↻ '+t('Réessayer')+'</button>'+
+   (n?'<a class="send wa" style="display:block;text-align:center;text-decoration:none" href="https://wa.me/'+n+'?text='+encodeURIComponent(m)+'">'+t('Envoyer ma commande sur WhatsApp')+'</a>':''));}
+
+/* ---------- Suivi de la commande par le client (sans compte) ---------- */
+let SUIVI=null,WAMSG='',suiviT=null,AC=null;
+const SKEY=()=>'cb.suivi.'+(CODE||'DEMO');
+function suiviSave(){try{if(SUIVI&&!SUIVI.demo)localStorage.setItem(SKEY(),JSON.stringify(SUIVI));}catch(e){}}
+function suiviLoad(){try{const x=JSON.parse(localStorage.getItem(SKEY())||'null');if(x&&x.no&&x.tk&&Date.now()-x.at<7*864e5)SUIVI=x;}catch(e){}}
+const FIN=x=>!!x&&(x.st==='refuse'||x.liv==='livree'||x.liv==='annulee'||(x.st==='vendu'&&!x.liv&&x.vu&&Date.now()-x.vu>3*60000));
+function suiviBox(x){const liv=x.mode!=='retrait',no='N° '+esc(x.no);
+  const B=(c,ti,tx)=>'<div class="stbox" style="--sc:'+c+'"><b>'+ti+'</b><div>'+tx+'</div></div>';
+  if(x.st==='refuse')return B('#B4361B','❌ Commande '+no+' refusée','Le vendeur ne peut pas la prendre pour le moment. Écrivez-lui sur WhatsApp pour en savoir plus.');
+  if(x.st==='vendu'){
+    if(x.liv==='livree')return B('#0B6E5B','✅ Commande '+no+' livrée','Merci pour votre achat !');
+    if(x.liv==='annulee')return B('#B4361B','❌ Commande '+no+' annulée','Écrivez au vendeur sur WhatsApp pour en savoir plus.');
+    if(x.liv==='route')return x.devis?B('#1DA851','✅ Votre commande '+no+' est prête','Le vendeur vous appelle pour la livraison ou la pose.'):B('#1DA851','🛵 Votre commande '+no+' est en route','Le livreur arrive bientôt.');
+    if(x.liv==='prep')return B('#0B6E5B','✅ Commande '+no+' confirmée','Le vendeur prépare votre commande.');
+    return x.devis?B('#0B6E5B','✅ Demande '+no+' reçue','Le vendeur prépare votre devis et vous contacte.'):B('#0B6E5B','✅ Commande '+no+' confirmée',liv?'Le vendeur vous livre bientôt.':'Vous pouvez passer la récupérer.');}
+  return B('#C58A00','⏳ Commande '+no+' envoyée au vendeur','En attente de confirmation… Cette page se met à jour toute seule.');}
+function envoyee(){const n=waNo(),x=SUIVI;
+  open('<div class="sh"><h2>'+(x.devis?'Demande envoyée':'Commande envoyée')+'</h2><button class="x" type="button" data-close>×</button></div>'+
+   '<div id="suiviBox">'+suiviBox(x)+'</div>'+
+   (x.demo?'<p class="note">Exemple : dans la vraie boutique, la commande arrive dans l\'app du vendeur et son téléphone sonne. Ici, elle se confirme toute seule après quelques secondes.</p>':'<p class="note">Gardez cette page : vous voyez ici quand le vendeur confirme.</p>')+
+   (n&&!x.demo?'<a class="send wa" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/'+n+'?text='+encodeURIComponent(WAMSG||'Bonjour, c\'est pour ma commande N° '+x.no)+'">'+t('Écrire au vendeur sur WhatsApp')+'</a>':'')+
+   '<button class="send ghost" type="button" data-close>'+t('Fermer')+'</button>');}
+function suiviPaint(){const x=SUIVI,top=$('suiviTop');if(top)top.innerHTML=x&&!(FIN(x)&&Date.now()-x.at>2*864e5)?'<div class="suivitop">'+suiviBox(x)+'</div>':'';
+  const bx=$('suiviBox');if(bx&&x)bx.innerHTML=suiviBox(x);}
+function bip(){try{navigator.vibrate&&navigator.vibrate([250,120,250]);}catch(e){}
+  try{if(!AC)return;[0,.3].forEach((d,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=i?1318:988;g.gain.setValueAtTime(.0001,AC.currentTime+d);g.gain.exponentialRampToValueAtTime(.45,AC.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d+.8);o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+d);o.stop(AC.currentTime+d+.9)});}catch(e){}}
+document.addEventListener('pointerdown',()=>{try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state!=='running')AC.resume();}catch(e){}},{passive:true});
+async function suivre(){clearTimeout(suiviT);const x=SUIVI;if(!x)return;
+  const avant=x.st+'|'+(x.liv||'');
+  if(x.demo){const s=(Date.now()-x.at)/1000;if(s>8){x.st='vendu';x.liv=x.mode==='retrait'?null:(s>16?'route':'prep');}}
+  else{try{const r=await fetch(SUPA_URL+'/rest/v1/rpc/boutique_cmd_suivi',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_id:x.no,p_tk:x.tk})});
+    if(r.ok){const j=await r.json();if(j&&j.ok){x.st=j.statut||x.st;x.liv=j.liv||null;if(x.st==='vendu'&&!x.vu)x.vu=Date.now();suiviSave();}
+      else if(j&&j.raison==='ancienne'){SUIVI=null;try{localStorage.removeItem(SKEY());}catch(e){}suiviPaint();return;}}}catch(e){}}
+  if(x.st+'|'+(x.liv||'')!==avant&&x.st!=='nouveau')bip();
+  suiviPaint();if(FIN(x)||(x.demo&&(x.liv==='route'||(x.st==='vendu'&&!x.liv))))return;
+  suiviT=setTimeout(suivre,document.visibilityState==='hidden'?20000:8000);}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&SUIVI&&!FIN(SUIVI))suivre();});
 
 /* ---------- Événements ---------- */
 document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}
@@ -408,7 +456,7 @@ document.addEventListener('click',e=>{if(e.target.id==='shade'){close();return;}
   if(b.dataset.m){keep();const id=b.dataset.m;cart[id]=Math.max(0,(cart[id]||0)-1);if(!cart[id])delete cart[id];list();bar();if(b.hasAttribute('data-in'))showCart();return;}
   if(b.dataset.mode){keep();mode=b.dataset.mode;showCart();return;}
   if(b.dataset.pay){keep();pay=b.dataset.pay;showCart();return;}
-  if(b.id==='sendWa'){send();return;}
+  if(b.id==='sendWa'||b.hasAttribute('data-retry')){send();return;}
   if(b.hasAttribute('data-close')){close();return;}
   if(b.id==='cartBtn'){showCart();return;}
   if(b.id==='theme'){const r=document.documentElement,dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);r.setAttribute('data-theme',dark?'light':'dark');try{localStorage.setItem('carnetShop.theme',dark?'light':'dark');}catch(x){}themeBtn();return;}
@@ -452,6 +500,7 @@ async function boot(){
     DEMO=false;all();if(!D.articles.length)$('list').innerHTML='<p class="empty">Aucun article pour le moment. Revenez bientôt !</p>';}
   catch(e){closed(t('Pas de connexion internet.'),'Vérifiez internet et réessayez.',true);}}
 boot();
+suiviLoad();if(SUIVI){suiviPaint();if(!FIN(SUIVI))suivre();}
 </script>
 
 </body>
