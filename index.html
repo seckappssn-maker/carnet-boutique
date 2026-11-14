@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><script>/* terangaapps.com : passe en https dès que le certificat est prêt */(function(){try{var l=location;if(l.protocol==="http:"&&/(^|\.)terangaapps\.com$/.test(l.hostname)){var u="https://"+l.host+l.pathname+l.search+l.hash;fetch("https://"+l.host+"/CNAME",{mode:"no-cors",cache:"no-store"}).then(function(){l.replace(u)}).catch(function(){})}}catch(e){}})();</script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.pushcard{display:flex;flex-direction:column;gap:10px;background:var(--pc-bg,transparent);border:1px solid var(--pc-line,rgba(128,128,128,.35));border-radius:14px;padding:14px;margin:12px 0}
+<!doctype html><html lang="fr"><head><script>/* terangaapps.com : passe en https dès que le certificat est prêt */(function(){try{var l=location;if(l.protocol==="http:"&&/(^|\.)terangaapps\.com$/.test(l.hostname)){var u="https://"+l.host+l.pathname+l.search+l.hash;fetch("https://"+l.host+"/CNAME",{mode:"no-cors",cache:"no-store"}).then(function(){l.replace(u)}).catch(function(){})}}catch(e){}})();</script><meta charset=utf8><script>/* Essai gratuit : 1 mois pour toute inscription jusqu'au 31/01/2027 (offre de lancement), puis 14 jours. Même règle sur le serveur (Supabase seck_essai_fin). */window.ESSAI_LANCEMENT=Date.now()<Date.UTC(2027,1,1);window.ESSAI_TXT=ESSAI_LANCEMENT?'1 mois gratuit':'14 jours gratuits';window.ESSAI_TXT_LONG=ESSAI_LANCEMENT?"1 mois d'essai gratuit":"14 jours d'essai gratuit";window.ESSAI_IT=ESSAI_LANCEMENT?'1 mese gratis':'14 giorni gratis';window.ESSAI_JOURS=ESSAI_LANCEMENT?30:14;</script><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.pushcard{display:flex;flex-direction:column;gap:10px;background:var(--pc-bg,transparent);border:1px solid var(--pc-line,rgba(128,128,128,.35));border-radius:14px;padding:14px;margin:12px 0}
 .pushh{font-size:17px}.pushnote{font-size:14px;opacity:.85;line-height:1.4}.pushwarn{color:#b45309;opacity:1;font-weight:600}
 .pushon{font-weight:800}.pushrow{display:flex;gap:8px;flex-wrap:wrap}
 .pushbtn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;font-size:16px;min-height:46px;cursor:pointer;background:var(--pc-accent,#0B6E5B);color:#fff}
@@ -12,7 +12,7 @@
 <meta property="og:title" content="Carnet Boutique">
 <meta property="og:description" content="Gère tes crédits sur ton téléphone. Français • Wolof. Essai gratuit 1 semaine.">
 <meta property="og:url" content="https://boutique.terangaapps.com/">
-<meta property="og:image" content="https://boutique.terangaapps.com/copertina.png">
+<meta property="og:image" content="https://boutique.terangaapps.com/copertina.png?v=2">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -475,6 +475,8 @@ const WO_RX=[
 [/^L'app sera bloquée dans (-?\d+) jour\(s\)\. Payez pour continuer\.$/,"App bi dina tëju ci $1 fan. Feyal ngir wéy."],
 [/^Votre essai gratuit se termine le$/,"Sa jéem bu amul pey dina jeex ci"],[/^Votre abonnement se termine le$/,"Sa abonnement dina jeex ci"],
 [/^\((-?\d+) j\)\.$/,"($1 fan)."],
+[/^Ventes, factures WhatsApp, crédits des clients, stock avec code-barres, fournisseurs et dépenses\. 1 mois d'essai gratuit\.$/,"Jaay, faktiir ci WhatsApp, boru kiliyaan yi, stock ak code-barres, fournisseurs ak depaans. Benn weer ngir jéem, amul pey."],
+[/^Ventes, factures WhatsApp, crédits des clients, stock avec code-barres, fournisseurs et dépenses\. 1 mois d'essai gratuit\.$/,"Jaay, faktiir ci WhatsApp, boru kiliyaan yi, stock ak code-barres, fournisseurs ak depaans. Benn weer ngir jéem, amul pey."],
 [/^Ventes, factures WhatsApp, crédits des clients, stock avec code-barres, fournisseurs et dépenses\. (\d+) jours d'essai gratuit\.$/,"Jaay, faktiir ci WhatsApp, boru kiliyaan yi, stock ak code-barres, fournisseurs ak depaans. $1 fan ngir jéem, amul pey."],
 [/^(\d+) facture\(s\)$/,"$1 faktiir"],[/^(\d+) client\(s\)$/,"$1 kiliyaan"],[/^(\d+) en retard$/,"$1 yàgg nañu"],[/^(\d+) à racheter$/,"$1 war a jënd"],
 [/^(\d+) en attente$/,"$1 ñuy xaar"],[/^(\d+) ligne\(s\) sans prix d'achat$/,"$1 marsandiis amul njëgu jënd"],
@@ -544,7 +546,7 @@ function applyCfg(c){if(!c||typeof c!=='object')return;const d=x=>String(x||'').
   if(d(c.paiement).length>=9)PAY_NUM=String(c.paiement).trim();if(c.prix)PRIX_MOIS=String(c.prix);if(c.nom)SUPPORT_NAME=String(c.nom);}
 try{applyCfg(JSON.parse(localStorage.getItem('carnetBoutique.cfg')||'null'));}catch(e){}
 try{fetch('config.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(c=>{if(!c)return;applyCfg(c);try{localStorage.setItem('carnetBoutique.cfg',JSON.stringify(c));}catch(e){}try{if(S)render();}catch(e){}}).catch(()=>{});}catch(e){}
-const TRIAL_DAYS=7, GRACE_DAYS=3;
+const TRIAL_DAYS=ESSAI_JOURS, GRACE_DAYS=3;
 // ===== Abonnement : vérifié en ligne (table abonnements, modifiable seulement par Seck Tech) =====
 const A31='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 function h32(s,seed){let h=seed>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}h^=h>>>13;h=Math.imul(h,0x5bd1e995)>>>0;h^=h>>>15;return h>>>0;}
@@ -731,7 +733,7 @@ function banner(L){
   if(L.st==='grace')return '<div class="banner bad"><b>Abonnement expiré le '+fdate(L.end)+'.</b><span>L\'app sera bloquée dans '+(GRACE_DAYS+L.left)+' jour(s). Payez pour continuer.</span></div>';
   if(L.st==='warn')return '<div class="banner warn"><span>'+(L.trial?'Votre essai gratuit':'Votre abonnement')+' se termine le <b>'+fdate(L.end)+'</b> ('+L.left+' j).</span></div>';
   return '';}
-function onboard(){return '<div class="wrap"><div class="hero-on"><div class="seg" style="max-width:260px;margin-bottom:22px"><button class="segb" type="button" data-lang="fr" aria-pressed="'+(LANG!=='wo')+'">Français</button><button class="segb" type="button" data-lang="wo" aria-pressed="'+(LANG==='wo')+'">Wolof</button></div><h1>Carnet Boutique</h1><p>Ventes, factures WhatsApp, crédits des clients, stock avec code-barres, fournisseurs et dépenses. '+TRIAL_DAYS+' jours d\'essai gratuit.</p></div>'+(IS_APP?'':a2hsCard(true)+'<div style="height:14px"></div>')+
+function onboard(){return '<div class="wrap"><div class="hero-on"><div class="seg" style="max-width:260px;margin-bottom:22px"><button class="segb" type="button" data-lang="fr" aria-pressed="'+(LANG!=='wo')+'">Français</button><button class="segb" type="button" data-lang="wo" aria-pressed="'+(LANG==='wo')+'">Wolof</button></div><h1>Carnet Boutique</h1><p>Ventes, factures WhatsApp, crédits des clients, stock avec code-barres, fournisseurs et dépenses. '+ESSAI_TXT_LONG+'.</p></div>'+(IS_APP?'':a2hsCard(true)+'<div style="height:14px"></div>')+
  '<form id="fOn" class="card stack"><label class="f">Nom de la boutique<input id="onName" placeholder="Ex : Boutique Touba"></label>'+
  '<label class="f">Nom du propriétaire<input id="onOwner" placeholder="Ex : Moustapha Gningue"></label>'+
  '<label class="f">Téléphone<input id="onPhone" inputmode="tel" placeholder="77 000 00 00" value="'+esc(userPhone())+'"></label>'+
